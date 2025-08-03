@@ -29,7 +29,6 @@ logger = logging.getLogger(__name__)
 
 class BaseProcessor:
     """"""
-
     def __init__(self, ctx: dict):
         self.data_line = ctx["interface"]["data_line"]
         self.data_provider = ctx["data_service"]["data_provider"]
