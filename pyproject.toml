@@ -2,10 +2,9 @@
 requires = ["setuptools>=80.0"]
 build-backend = "setuptools.build_meta"
 
-
 [project]
 name = "stonk_cli"
-version = "0.1.0" # REQUIRED, although can be dynamic
+version = "0.1.0"
 description = "Download stockmarket charts, data, and heatmaps"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -39,18 +38,13 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3 :: Only",
 ]
-dependencies = ["click", "Pillow", "selenium", "urllib3"]
+dependencies = ["click", "python-dotenv", "scikit-learn", "yfinance",]
 
+[project.optional-dependencies]
 # List additional groups of dependencies here (e.g. development
 # dependencies). Users will be able to install these using the "extras"
 # syntax, for example:
-#
-#   $ pip install stonk_cli[dev]
-#
-# Optional dependencies the project provides. These are commonly
-# referred to as "extras". For a more extensive definition see:
-# https://packaging.python.org/en/latest/specifications/dependency-specifiers/#extras
-[project.optional-dependencies]
+#   $ pip install sampleproject[dev]
 dev = ["black", "coverage", "pytest",]
 
 [project.urls]
@@ -71,7 +65,7 @@ stonk_cli = "pkg:run_cli"
 
 [tool.black]
 line-length = 120
-target-version = ['py37']
+target-version = ['py310']
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

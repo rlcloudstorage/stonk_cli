@@ -1,8 +1,6 @@
 """src/pkg/cli/cmd_data.py"""
 import logging
 
-from time import sleep
-
 import click
 
 from pkg import DEBUG
@@ -33,38 +31,28 @@ def cli(ctx, arguments):
     if DEBUG: logger.debug(f"start_cli(ctx={type(ctx)}, arguments={arguments})")
 
     ctx['interface']['command'] = 'data'
-    # ctx['interface']['data_line'] = ctx['data_service']['data_line']
-    ctx['interface']['target_data'] = ctx['data_service']['target_data']
 
     # add arguments to interface ctx and set database name
     if arguments:  # use symbols in arguments list
-        ctx['interface']['arguments'] = sorted([i.upper() for i in list(arguments)])
+        ticker_list = sorted([i.upper() for i in list(arguments)])
         ctx['interface']['database'] = click.prompt(
             f"* Using database 'custom.db'. Type a new database name to change,\n  press Enter to accept.", default="custom.db"
         )
     else:  # use symbols in data_service data_list
-        ctx['interface']['arguments'] = sorted(list(ctx['data_service']['data_list'].split(' ')))
+        ticker_list = sorted(
+            list(ctx['default']['indicator'].split(' ')) + list(ctx['default']['target'].split(' '))
+        )
         ctx['interface']['database'] = click.prompt(
             f"* Using database 'default.db'. Type a new database name to change,\n  press Enter to accept", default="default.db"
         )
+    ctx['interface']['ticker'] = ticker_list
 
     data_line = click.prompt(f"* Using data line '{ctx['data_service']['data_line']}'. Type a new value to change,\n  press Enter to accept", default=ctx['data_service']['data_line'])
     ctx['interface']['data_line'] = sorted([i.upper() for i in data_line.split(' ')])
 
-    target_data = click.prompt(f"* Using target data '{ctx['data_service']['target_data']}'. Type a new value to change,\n  type 'None' to skip, press Enter to accept", default=ctx['data_service']['target_data'])
-    ctx['interface']['target_data'] = sorted([td.upper() for td in target_data.split(' ')])
-
-    if click.confirm(f"* Saving {ctx['interface']['data_line']}\n  for {ctx['interface']['arguments']}\n  to '{ctx['interface']['database']}, using target {ctx['interface']['target_data']}.\n  Do you want to continue?"):
+    if click.confirm(f"* Saving {ctx['interface']['data_line']} for {ctx['interface']['ticker']}\n  to '{ctx['interface']['database']}.  Do you want to continue?"):
         from pkg.data_srv import client
 
-        client.fetch_indicator_data(ctx=ctx)
-
-        client.fetch_target_data(ctx=ctx)
-        # if ctx['interface']['target_data'] != 'None':
-        #     for index, symbol in enumerate(ctx['interface']['target_data']):
-        #         if not DEBUG: print(f"  fetching target data for {symbol}...")
-        #         sleep(2)
-        #         ctx['interface']['index'] = index
-        #         client.fetch_target_data(ctx=ctx, symbol=symbol)
+        client.fetch_stonk_data(ctx=ctx)
 
         if not DEBUG: print(f" Saved data to '{ctx['default']['work_dir']}{ctx['interface']['command']}/{ctx['interface']['database']}'\n")

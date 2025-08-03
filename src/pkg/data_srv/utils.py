@@ -19,14 +19,14 @@ def create_sqlite_indicator_database(ctx: dict) -> None:
         logger.debug(f"create_sqlite_indicator_database(ctx={type(ctx)})")
 
     # create data folder in users work_dir
-    Path(f"{ctx['default']['work_dir']}/data").mkdir(parents=True, exist_ok=True)
+    Path(f"{ctx['default']['work_dir']}/{ctx['interface']['command']}").mkdir(parents=True, exist_ok=True)
     # if old database exists remove it
-    Path(f"{ctx['default']['work_dir']}/data/{ctx['interface']['database']}").unlink(missing_ok=True)
+    Path(f"{ctx['default']['work_dir']}/{ctx['interface']['command']}/{ctx['interface']['database']}").unlink(missing_ok=True)
 
     try:
         with SqliteConnectManager(ctx=ctx, mode="rwc") as conn:
             # create table for each ticker symbol
-            for table in ctx["interface"]["arguments"]:
+            for table in ctx["interface"]["ticker"]:
                 conn.cursor.execute(
                     f"""
                     CREATE TABLE {table.upper()} (

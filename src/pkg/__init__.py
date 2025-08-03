@@ -4,20 +4,21 @@ import os
 
 from configparser import ConfigParser
 
+from dotenv import load_dotenv
 
-root_dir = os.path.dirname(
-    os.path.dirname(
-        os.path.dirname(
-            os.path.abspath(__file__)
-)))
+load_dotenv()
+
+root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 src_dir = os.path.join(root_dir, 'src/')
-work_dir = os.path.join(root_dir, 'temp/')
+# check 'work_dir' exists, if not create it
+os.makedirs(os.path.join(root_dir, 'work_dir'), exist_ok=True)
+work_dir = os.path.join(root_dir, 'work_dir/')
 pkg_dir = os.path.join(root_dir, 'src/pkg')
 config_file = os.path.join(src_dir, 'config.ini')
 logger_conf = os.path.join(src_dir, 'logger.ini')
 
 logging.config.fileConfig(fname=logger_conf)
-logging.getLogger('unittest').setLevel(logging.WARNING)
+logger = logging.getLogger(f"  === Starting stonk_cli app - src/{__name__}/__init__.py ===")
 
 # Create getlist() converter, used for reading ticker symbols
 config_obj = ConfigParser(
@@ -30,6 +31,8 @@ if not os.path.isfile(config_file):
     # Add the structure to the configparser object
     config_obj.add_section('default')
     config_obj.set('default', 'debug', 'False')
+    config_obj.set('default', 'indicator', os.getenv('INDICATOR'))
+    config_obj.set('default', 'target', os.getenv('TARGET'))
     config_obj.set('default', 'work_dir', work_dir)
     config_obj.add_section('interface')
     # Write the structure to the new file
@@ -41,7 +44,7 @@ if not os.path.isfile(config_file):
 try:
     config_obj.read(config_file)
 except Exception as e:
-    print(f"{e} - {config_file}")
+    logger.debug(f"{e} - {config_file}")
 
 config_obj.read(config_file)
 
@@ -69,8 +72,12 @@ config_dict['default']['debug'] = config_obj.getboolean('default', 'debug')
 # Add main config path to config_dict
 config_dict['default']['cfg_main'] = config_file
 
+# Add api token to data_serv
+config_dict['data_service']['token_alphavantage'] = os.getenv('TOKEN_ALPHAVANTAGE')
+config_dict['data_service']['token_alphavantage_1'] = os.getenv('TOKEN_ALPHAVANTAGE_1')
+config_dict['data_service']['token_tiingo'] = os.getenv('TOKEN_TIINGO')
+
 # Print/log some debug information
-logger = logging.getLogger(f"  === Starting stomartat package - src/{__name__}/__init__.py ===")
 DEBUG = config_dict['default']['debug']
 # if config_dict['default']['debug']: logger.debug(f"""
 if DEBUG: logger.debug(f"""
@@ -92,8 +99,3 @@ def run_cli():
     """see 'pyproject.toml' - entry point for CLI"""
     from .cli import main_console
     main_console.start_cli()
-
-def run_gui():
-    """see 'pyproject.toml' - entry point for GUI"""
-    from .gui import main_window
-    main_window.start_gui()

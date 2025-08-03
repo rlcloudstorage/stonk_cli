@@ -105,36 +105,36 @@ class SqliteConnectManager:
         self.connection.close()
 
 
-class WebDriverManager:
-    """Manage Selenium WebDriver.\n
-    Put Firefox geckodriver somewhere on sysetm path.
-    """
-    # from selenium.webdriver import Chrome
-    # from selenium.webdriver import ChromeOptions
-    from selenium.webdriver import Firefox
-    from selenium.webdriver import FirefoxOptions
+# class WebDriverManager:
+#     """Manage Selenium WebDriver.\n
+#     Put Firefox geckodriver somewhere on sysetm path.
+#     """
+#     # from selenium.webdriver import Chrome
+#     # from selenium.webdriver import ChromeOptions
+#     from selenium.webdriver import Firefox
+#     from selenium.webdriver import FirefoxOptions
 
-    def __init__(self, debug: bool):
-        # self.opt = self.ChromeOptions()
-        self.opt = self.FirefoxOptions()
-        self.opt.add_argument("--headless=new")
-        # self.opt.add_argument("--user-agent='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36'")
-        self.opt.add_argument("--user-agent='Mozilla/5.0 (X11; Linux x86_64; rv:136.0) Gecko/20100101 Firefox/136.0'")
-        # self.opt.page_load_strategy = "eager"
-        self.opt.page_load_strategy = "none"
+#     def __init__(self, debug: bool):
+#         # self.opt = self.ChromeOptions()
+#         self.opt = self.FirefoxOptions()
+#         self.opt.add_argument("--headless=new")
+#         # self.opt.add_argument("--user-agent='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36'")
+#         self.opt.add_argument("--user-agent='Mozilla/5.0 (X11; Linux x86_64; rv:136.0) Gecko/20100101 Firefox/136.0'")
+#         # self.opt.page_load_strategy = "eager"
+#         self.opt.page_load_strategy = "none"
 
-    def __enter__(self):
-        # self.driver = self.Chrome(options=self.opt)
-        self.driver = self.Firefox(options=self.opt)
-        if DEBUG: logger.debug(f'{self.__class__.__name__}.__enter__(session={self.driver.session_id})')
-        # Install ad blocker if used
-        # if os.path.exists(ADBLOCK):
-        #     self.driver.install_addon(ADBLOCK)
-        #     pyautogui.PAUSE = 2.5
-        #     pyautogui.click()  # position browser window
-        #     pyautogui.hotkey('ctrl', 'w')  # close ADBLOCK page
-        return self.driver
+#     def __enter__(self):
+#         # self.driver = self.Chrome(options=self.opt)
+#         self.driver = self.Firefox(options=self.opt)
+#         if DEBUG: logger.debug(f'{self.__class__.__name__}.__enter__(session={self.driver.session_id})')
+#         # Install ad blocker if used
+#         # if os.path.exists(ADBLOCK):
+#         #     self.driver.install_addon(ADBLOCK)
+#         #     pyautogui.PAUSE = 2.5
+#         #     pyautogui.click()  # position browser window
+#         #     pyautogui.hotkey('ctrl', 'w')  # close ADBLOCK page
+#         return self.driver
 
-    def __exit__(self, exc_type, exc_value, exc_traceback):
-        self.driver.quit()
-        if DEBUG: logger.debug(f'{self.__class__.__name__}.__exit__({self.driver.session_id})')
+#     def __exit__(self, exc_type, exc_value, exc_traceback):
+#         self.driver.quit()
+#         if DEBUG: logger.debug(f'{self.__class__.__name__}.__exit__({self.driver.session_id})')
