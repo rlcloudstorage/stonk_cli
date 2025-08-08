@@ -8,13 +8,15 @@ class TiingoDataProcessor\n
 class YahooFinanceDataProcessor
 """
 
-import datetime, logging, os, time
+import datetime, logging, os, pickle, time
+
+from statistics import fmean
 
 import numpy as np
 import pandas as pd
 
 from dotenv import load_dotenv
-
+from numpy.lib.stride_tricks import sliding_window_view
 from pkg import DEBUG
 
 
@@ -37,6 +39,7 @@ class BaseProcessor:
         self.lookback = int(ctx["data_service"]["data_lookback"])
         self.scaler = self._set_sklearn_scaler(ctx["data_service"]["sklearn_scaler"])
         self.start_date, self.end_date = self._start_end_date
+        self.window_size = int(ctx["interface"]["window_size"])
         self.work_dir = ctx["default"]["work_dir"]
 
     @property
@@ -47,6 +50,22 @@ class BaseProcessor:
         end = datetime.date.today()
         return start, end
 
+    def _sliding_window_scaled_data(self, data_list: list):
+        """"""
+        if DEBUG: logger.debug(f"_sliding_window_scaled_data(data_list={data_list})")
+
+        scaled_data = list()
+        v = sliding_window_view(x=data_list, window_shape=self.window_size)
+
+        # scale each row in window view then append last item to scaled_data list
+        for row in v:
+            scaled_row = self.scaler.fit_transform(X=row.reshape(-1, 1))
+            scaled_item = int((scaled_row.item(-1) + 10) * 100)
+            scaled_data.append(scaled_item)
+
+        # pad front of scaled_data with average value
+        return [int(fmean(scaled_data))] * (self.window_size - 1) + scaled_data
+
     def _set_sklearn_scaler(self, scaler):
         """Uses config file [data_service][sklearn_scaler] value"""
         if scaler == "MinMaxScaler":
@@ -54,7 +73,8 @@ class BaseProcessor:
             return MinMaxScaler()
         elif scaler == "RobustScaler":
             from sklearn.preprocessing import RobustScaler
-            return RobustScaler(quantile_range=(0.0, 100.0))
+            # return RobustScaler(quantile_range=(0.0, 100.0))
+            return RobustScaler()
 
     def download_and_parse_price_data(self, ticker: str) -> tuple:
         """Returns a tuple, (ticker, dataframe)"""
@@ -67,7 +87,7 @@ class BaseProcessor:
 
         if not DEBUG:
             print("processing data\t", end="")
-        # return eval(f"self._process_{self.data_provider}_data(data_gen=data_gen)")
+        return eval(f"self._process_{self.data_provider}_data(data_gen=data_gen)")
 
 
 # class AlphaVantageDataProcessor(BaseProcessor):
@@ -360,15 +380,18 @@ class YahooFinanceDataProcessor(BaseProcessor):
         if DEBUG:
             logger.debug(f"_yfinance_data_generator(ticker={ticker})")
 
-        try:
-            yf_data = self.yf.Ticker(ticker=ticker)
-            yf_df = yf_data.history(start=self.start_date, end=self.end_date, interval=self.interval)
-        except Exception as e:
-            logger.debug(f"*** ERROR *** {e}")
-        else:
-            yield ticker, yf_df
-            # with open(f"{self.work_dir}/{ticker}.pkl", "wb") as pkl:
-            #     pickle.dump((ticker, yf_df), pkl)
+        # try:
+        #     yf_data = self.yf.Ticker(ticker=ticker)
+        #     yf_df = yf_data.history(start=self.start_date, end=self.end_date, interval=self.interval)
+        # except Exception as e:
+        #     logger.debug(f"*** ERROR *** {e}")
+        # else:
+        #     yield ticker, yf_df
+
+        # yield data from saved pickle
+        with open(f"{self.work_dir}{ticker}.pkl", "rb") as pkl:
+            ticker, df = pickle.load((pkl))
+        yield ticker, df
 
     def _process_yfinance_data(self, data_gen: object) -> pd.DataFrame:
         """Returns a tuple (ticker, dataframe)"""
@@ -377,7 +400,7 @@ class YahooFinanceDataProcessor(BaseProcessor):
 
         ticker, yf_df = next(data_gen)
         yf_df = yf_df.drop(columns=yf_df.columns.values[-3:], axis=1)
-
+        if DEBUG: logger.debug(f"ticker: {ticker}, yf_df:\n{yf_df}")
         # create empty dataframe with index as a timestamp
         df = pd.DataFrame(index=yf_df.index.values.astype(int) // 10**9)
         df.index.name = "date"
@@ -396,23 +419,24 @@ class YahooFinanceDataProcessor(BaseProcessor):
         #     logger.debug(f"*** ERROR *** {e}")
 
         # close weighted average price exclude open price
-        cwap = np.array(
-            list((2 * yf_df["Close"] + yf_df["High"] + yf_df["Low"]) / 4)
-        ).reshape(-1, 1)
-        # cwap = np.rint((self.scaler.fit_transform(cwap).flatten() + 10) * 100).astype(int)
-        cwap = np.rint((
-            self.scaler.fit_transform(cwap).flatten() + 10
-        ) * 100).astype(int)
-        if DEBUG: logger.debug(f"scaled_cwap: {cwap} {type(cwap)}")
+        cwap = list(round(
+            (2 * yf_df["Close"] + yf_df["High"] + yf_df["Low"]) * 25
+        ).astype(int))
+        if DEBUG: logger.debug(f"cwap array: {cwap} {type(cwap)}")
+
+        cwap = self._sliding_window_scaled_data(data_list=cwap)
+        if DEBUG: logger.debug(f"scaled cwap: {cwap} {type(cwap)} len {len(cwap)}")
 
         # # difference between the high and low price
         # hilo = list(round((yf_df["High"] - yf_df["Low"]) * 100).astype(int))
         # if DEBUG: logger.debug(f"hilo: {hilo} {type(hilo)}")
 
         # number of shares traded
-        volume = np.array(list(yf_df["Volume"])).reshape(-1, 1)
-        volume = np.rint((self.scaler.fit_transform(volume).flatten() + 10) * 100).astype(int)
-        if DEBUG: logger.debug(f"scaled_volume: {volume} {type(volume)}")
+        volume = list(yf_df["Volume"])
+        if DEBUG: logger.debug(f"volume array: {volume} {type(volume)}")
+
+        volume = self._sliding_window_scaled_data(data_list=volume)
+        if DEBUG: logger.debug(f"scaled volume: {volume} {type(volume)} len {len(volume)}")
 
         # # price times number of shares traded
         # mass = np.array(cwap * volume).reshape(-1, 1)

@@ -25,16 +25,11 @@ def fetch_stonk_data(ctx:dict)->None:
 
     # get and save data for each ticker
     for index, ticker in enumerate(ctx['interface']['ticker']):
-    # for index, ticker in enumerate(os.listdir(f"{ctx['default']['work_dir']}/yf_df")):
         if not DEBUG: print(f"  - fetching {ticker}\t", end="")
 
-        # with open(f"{ctx['default']['work_dir']}yf_df/{ticker}", "rb") as pkl:
-        #     data = pickle.load((pkl))
-        #     yield data
-
         ctx['interface']['index'] = index  # alphavantage may throttle at five downloads
-        # data_tuple = processor.download_and_parse_price_data(ticker=ticker)
-        # utils.write_indicator_data_to_sqlite_db(ctx=ctx, data_tuple=data_tuple)
+        data_tuple = processor.download_and_parse_price_data(ticker=ticker)
+        utils.write_indicator_data_to_sqlite_db(ctx=ctx, data_tuple=data_tuple)
 
     if not DEBUG:
         print(" finished.")

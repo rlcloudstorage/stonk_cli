@@ -43,7 +43,8 @@ def cli(ctx, arguments):
             default="custom.db",
         )
     else:  # use symbols in data_service data_list
-        ticker_list = sorted(list(ctx["default"]["indicator"].split(" ")) + list(ctx["default"]["target"].split(" ")))
+        # ticker_list = sorted(list(ctx["default"]["indicator"].split(" ")) + list(ctx["default"]["target"].split(" ")))
+        ticker_list = sorted(list(ctx["default"]["target"].split(" ")))
         ctx["interface"]["database"] = click.prompt(
             f"* Using database 'default.db'. Type a new database name to change,\n  press Enter to accept",
             default="default.db",
@@ -55,6 +56,11 @@ def cli(ctx, arguments):
         default=ctx["data_service"]["data_line"],
     )
     ctx["interface"]["data_line"] = sorted([i.upper() for i in data_line.split(" ")])
+
+    ctx["interface"]["window_size"] = click.prompt(
+        f"* Using sliding window size {ctx['default']['window_size']}. Type a new value to change,\n  press Enter to accept",
+        default=ctx['default']['window_size'],
+    )
 
     if click.confirm(
         f"* Saving {ctx['interface']['data_line']} for {ctx['interface']['ticker']} to '{ctx['interface']['database']}.\n  Do you want to continue?"
