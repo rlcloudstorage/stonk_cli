@@ -90,51 +90,51 @@ class BaseProcessor:
         return eval(f"self._process_{self.data_provider}_data(data_gen=data_gen)")
 
 
-# class AlphaVantageDataProcessor(BaseProcessor):
-#     """Fetch ohlc price data from alphavantage.com"""
+class AlphaVantageDataProcessor(BaseProcessor):
+    """Fetch ohlc price data from alphavantage.com"""
 
-#     import requests
+    import requests
 
-#     def __init__(self, ctx: dict):
-#         super().__init__(ctx=ctx)
-#         self.api_key = os.getenv(f"API_TOKEN_{self.data_provider.upper()}")
-#         self.api_key_1 = os.getenv(f"API_TOKEN_{self.data_provider.upper()}_1")
-#         self.function = self._parse_frequency
-#         self.index = ctx["interface"]["index"]
-#         self.url = ctx["data_service"][f"url_{self.data_provider}"]
+    def __init__(self, ctx: dict):
+        super().__init__(ctx=ctx)
+        self.api_key = os.getenv(f"API_TOKEN_{self.data_provider.upper()}")
+        self.api_key_1 = os.getenv(f"API_TOKEN_{self.data_provider.upper()}_1")
+        self.function = self._parse_frequency
+        self.index = ctx["interface"]["index"]
+        self.url = ctx["data_service"][f"url_{self.data_provider}"]
 
-#     def __repr__(self):
-#         return (
-#             f"{self.__class__.__name__}("
-#             f"api_key={self.api_key}, "
-#             f"api_key_1={self.api_key_1}, "
-#             f"data_provider={self.data_provider}, "
-#             f"function={self.function}, "
-#             f"scaler={self.scaler}, "
-#             f"url={self.url})"
-#         )
+    def __repr__(self):
+        return (
+            f"{self.__class__.__name__}("
+            f"api_key={self.api_key}, "
+            f"api_key_1={self.api_key_1}, "
+            f"data_provider={self.data_provider}, "
+            f"function={self.function}, "
+            f"scaler={self.scaler}, "
+            f"url={self.url})"
+        )
 
-#     @property
-#     def _parse_frequency(self):
-#         """Convert daily/weekly frequency to provider format"""
-#         frequency_dict = {"daily": "TIME_SERIES_DAILY", "weekly": "TIME_SERIES_WEEKLY"}
-#         return frequency_dict[self.frequency]
+    @property
+    def _parse_frequency(self):
+        """Convert daily/weekly frequency to provider format"""
+        frequency_dict = {"daily": "TIME_SERIES_DAILY", "weekly": "TIME_SERIES_WEEKLY"}
+        return frequency_dict[self.frequency]
 
-#     def _alphavantage_data_generator(self, ticker: str) -> object:
-#         """Yields a json generator object"""
-#         if DEBUG:
-#             logger.debug(f"_fetch_alphavantage_data(ticker={ticker})")
+    def _alphavantage_data_generator(self, ticker: str) -> object:
+        """Yields a json generator object"""
+        if DEBUG:
+            logger.debug(f"_fetch_alphavantage_data(ticker={ticker})")
 
-#         API_URL = self.url
+        API_URL = self.url
 
-#         params = {
-#             "function": self.function,
-#             "symbol": ticker,
-#             "outputsize": "compact",
-#             # output_size = "full"
-#             "datatype": "json",
-#             "apikey": self.api_key,
-#         }
+        params = {
+            "function": self.function,
+            "symbol": ticker,
+            "outputsize": "compact",
+            # output_size = "full"
+            "datatype": "json",
+            "apikey": self.api_key,
+        }
 
 #         try:
 #             # params['apikey'] = self.api_key if self.index < 24 else self.api_key_1  # site throttles at 25 downloads
@@ -151,22 +151,22 @@ class BaseProcessor:
 #         #             print(f" pausing for {i} ", end='\r', flush=True)
 #         #             time.sleep(1)
 
-#     def _process_alphavantage_data(self, data_gen: object) -> list[tuple]:
-#         """Returns a tuple (ticker, dataframe)"""
-#         if DEBUG:
-#             logger.debug(f"_process_alphavantage_data(data_gen={type(data_gen)})")
+    def _process_alphavantage_data(self, data_gen: object) -> list[tuple]:
+        """Returns a tuple (ticker, dataframe)"""
+        if DEBUG:
+            logger.debug(f"_process_alphavantage_data(data_gen={type(data_gen)})")
 
-#         alphavantage_dict = next(data_gen)
-#         ticker = alphavantage_dict["Meta Data"]["2. Symbol"]
-#         time_series_dict = alphavantage_dict["Time Series (Daily)"]
+        alphavantage_dict = next(data_gen)
+        ticker = alphavantage_dict["Meta Data"]["2. Symbol"]
+        time_series_dict = alphavantage_dict["Time Series (Daily)"]
 
-#         # create empty dataframe with index as a timestamp
-#         df = pd.DataFrame(
-#             index=[
-#                 round(time.mktime(datetime.datetime.strptime(d[:10], "%Y-%m-%d").timetuple())) for d in time_series_dict
-#             ]
-#         )
-#         df.index.name = "date"
+        # create empty dataframe with index as a timestamp
+        df = pd.DataFrame(
+            index=[
+                round(time.mktime(datetime.datetime.strptime(d[:10], "%Y-%m-%d").timetuple())) for d in time_series_dict
+            ]
+        )
+        df.index.name = "date"
 
 #         # add the data lines to dataframe
 #         def add_clop_series(loc: int) -> None:
@@ -234,118 +234,123 @@ class BaseProcessor:
 #         for i, item in enumerate(self.data_line):
 #             eval(f"add_{item}_series({i})")
 
-#         return ticker, df
+        return ticker, df
 
 
-# class TiingoDataProcessor(BaseProcessor):
-#     """Fetch ohlc price data from tiingo.com"""
+class TiingoDataProcessor(BaseProcessor):
+    """Fetch ohlc price data from tiingo.com"""
 
-#     from tiingo import TiingoClient
+    from tiingo import TiingoClient
 
-#     def __init__(self, ctx: dict):
-#         super().__init__(ctx=ctx)
-#         self.api_key = os.getenv(f"API_TOKEN_{self.data_provider.upper()}")
-#         self.frequency = ctx["data_service"]["data_frequency"]
+    def __init__(self, ctx: dict):
+        super().__init__(ctx=ctx)
+        self.api_key = {os.getenv('TOKEN_TIINGO')}
+        self.frequency = ctx["data_service"]["data_frequency"]
 
-#     def __repr__(self):
-#         return (
-#             f"{self.__class__.__name__}("
-#             f"api_token={self.api_token}, "
-#             f"frequency={self.frequency}, "
-#             f"lookback={self.lookback}, "
-#             f"scaler={self.scaler}, "
-#             f"start_date={self.start_date}, "
-#         )
+    def __repr__(self):
+        return (
+            f"{self.__class__.__name__}("
+            f"api_token={self.api_key}, "
+            f"data_line={self.data_line}, "
+            f"data_provider={self.data_provider}, "
+            f"frequency={self.frequency}, "
+            f"scaler={self.scaler}, "
+            f"start_date={self.start_date}, "
+            f"end_date={self.end_date})"
+        )
 
-#     def _tiingo_data_generator(self, ticker: str) -> object:
-#         """Yields a tuple (ticker, json)"""
-#         if DEBUG:
-#             logger.debug(f"_tiingo_data_generator(ticker={ticker})")
+    def _tiingo_data_generator(self, ticker: str) -> object:
+        """Yields a tuple (ticker, json)"""
 
-#         config = {
-#             "api_key": self.api_key,
-#             "session": True,  # reuse the same HTTP Session across API calls
-#         }
-#         client = self.TiingoClient(config)
+        if DEBUG:
+            logger.debug(f"_tiingo_data_generator(ticker={ticker})")
 
-#         try:
-#             historical_prices = client.get_ticker_price(
-#                 ticker=ticker, fmt="json", startDate=self.start_date, endDate=self.end_date, frequency=self.frequency
-#             )
-#         except Exception as e:
-#             logger.debug(f"*** ERROR *** {e}")
-#         else:
-#             if not DEBUG:
-#                 print(f" fetching {ticker}...")
-#             yield ticker, historical_prices
+        config = {}
+        # To reuse the same HTTP Session across API calls
+        # (and have better performance), include a session key.
+        config['session'] = True
+        # If you don't have your API key as an environment variable,
+        # pass it in via a configuration dictionary.
+        config['api_key'] = self.api_key
+        config['api_key'] = os.getenv('TOKEN_TIINGO')
+        # Initialize
+        client = self.TiingoClient(config)
 
-#     def _process_tiingo_data(self, data_gen: object) -> list[tuple]:
-#         """Returns a tuple (ticker, dataframe)"""
-#         if DEBUG:
-#             logger.debug(f"_process_tiingo_data(data_gen={type(data_gen)})")
+        # try:
+        #     historical_prices = client.get_ticker_price(
+        #         ticker=ticker, fmt='json', startDate=self.start_date, endDate=self.end_date, frequency=self.frequency
+        #     )
+        # except Exception as e:
+        #     logger.debug(f"*** ERROR *** {e}")
+        # else:
+        #     # # pickle ticker, historical_prices
+        #     # with open(f"{self.work_dir}{ticker}.t.pkl", "wb") as pkl:
+        #     #     pickle.dump((ticker, historical_prices), pkl)
+        #     yield ticker, historical_prices
 
-#         ticker, dict_list = next(data_gen)  # unpack items in data_gen
+        # yield data from saved pickle file
+        with open(f"{self.work_dir}{ticker}.t.pkl", "rb") as pkl:
+            ticker, historical_prices = pickle.load((pkl))
+        yield ticker, historical_prices
 
-#         # create empty dataframe with index as a timestamp
-#         df = pd.DataFrame(
-#             index=[
-#                 round(time.mktime(datetime.datetime.strptime(d["date"][:10], "%Y-%m-%d").timetuple()))
-#                 for d in dict_list
-#             ]
-#         )
-#         df.index.name = "date"
+    def _process_tiingo_data(self, data_gen: object) -> list[tuple]:
+        """Returns a tuple (ticker, dataframe)"""
+        if DEBUG:
+            logger.debug(f"_process_tiingo_data(data_gen={type(data_gen)})")
 
-#         # add each data line to dataframe
-#         def add_clop_series(loc: int) -> None:
-#             """difference between the close and open price"""
-#             if DEBUG:
-#                 logger.debug(f"add_clop_series(loc={loc})")
+        ticker, dict_list = next(data_gen)  # unpack items in data_gen
 
-#             clop = [round((d["adjClose"] - d["adjOpen"]) * 100) for d in dict_list]
-#             df.insert(loc=loc, column="clop", value=clop, allow_duplicates=True)
+        # create empty dataframe with index as a timestamp
+        df = pd.DataFrame(
+            index=[
+                round(time.mktime(datetime.datetime.strptime(d["date"][:10], "%Y-%m-%d").timetuple()))
+                for d in dict_list
+            ]
+        )
+        df.index.name = "date"
 
-#         def add_clv_series(loc: int) -> None:
-#             """close location value, relative to the high-low range"""
-#             if DEBUG:
-#                 logger.debug(f"add_clv_series(loc={loc})")
-#             try:
-#                 clv = [
-#                     round(((2 * d["adjClose"] - d["adjLow"] - d["adjHigh"]) / (d["adjHigh"] - d["adjLow"])) * 100)
-#                     for d in dict_list
-#                 ]
-#                 df.insert(loc=loc, column="clv", value=clv, allow_duplicates=True)
-#             except ZeroDivisionError as e:
-#                 logger.debug(f"*** ERROR *** {e}")
+        # difference between the close and open price
+        clop = [round((d["adjClose"] - d["adjOpen"]) * 100) for d in dict_list]
+        if DEBUG: logger.debug(f"clop: {clop} {type(clop)}")
 
-#         def add_cwap_series(loc: int) -> None:
-#             """close weighted average price excluding open price"""
-#             if DEBUG:
-#                 logger.debug(f"add_cwap_series(loc={loc})")
+        # close location value, relative to the high-low range
+        try:
+            clv = [
+                round(((2 * d["adjClose"] - d["adjLow"] - d["adjHigh"]) / (d["adjHigh"] - d["adjLow"])) * 100)
+                for d in dict_list
+            ]
+            if DEBUG: logger.debug(f"clv: {clv} {type(clv)}")
+        except ZeroDivisionError as e:
+            logger.debug(f"*** ERROR *** {e}")
 
-#             cwap = [round(((d["adjHigh"] + d["adjLow"] + 2 * d["adjClose"]) / 4) * 100) for d in dict_list]
-#             df.insert(loc=loc, column="cwap", value=cwap, allow_duplicates=True)
+        # close weighted average price exclude open price
+        cwap = [round(((d["adjHigh"] + d["adjLow"] + 2 * d["adjClose"]) / 4) * 100) for d in dict_list]
+        if DEBUG: logger.debug(f"cwap array: {cwap} {type(cwap)}")
 
-#         def add_hilo_series(loc: int) -> None:
-#             """difference between the high and low price"""
-#             if DEBUG:
-#                 logger.debug(f"add_hilo_series(loc={loc})")
+        sc_cwap = self._sliding_window_scaled_data(data_list=cwap)
+        if DEBUG: logger.debug(f"scaled cwap: {sc_cwap} {type(sc_cwap)} len {len(cwap)}")
 
-#             hilo = [round((d["adjHigh"] - d["adjLow"]) * 100) for d in dict_list]
-#             df.insert(loc=loc, column="hilo", value=hilo, allow_duplicates=True)
+        # difference between the high and low price
+        hilo = [round((d["adjHigh"] - d["adjLow"]) * 100) for d in dict_list]
+        if DEBUG: logger.debug(f"hilo: {hilo} {type(hilo)}")
 
-#         def add_volume_series(loc: int) -> None:
-#             """number of shares traded"""
-#             if DEBUG:
-#                 logger.debug(f"add_volume_series(loc={loc})")
+        # number of shares traded
+        volume = [d["adjVolume"] for d in dict_list]
+        if DEBUG: logger.debug(f"volume array: {volume} {type(volume)}")
 
-#             volume = [d["adjVolume"] for d in dict_list]
-#             df.insert(loc=loc, column="volume", value=volume, allow_duplicates=True)
+        sc_vol = self._sliding_window_scaled_data(data_list=volume)
+        if DEBUG: logger.debug(f"scaled volume: {sc_vol} {type(sc_vol)} len {len(volume)}")
 
-#         # insert values from each data line into df
-#         for i, item in enumerate(self.data_line):
-#             eval(f"add_{item}_series({i})")
+        # price times number of shares traded
+        mass = [c * v for c, v in zip(cwap, volume)]
+        sc_mass = self._sliding_window_scaled_data(data_list=mass)
+        if DEBUG: logger.debug(f"scaled_mass: {sc_mass} {type(sc_mass)}")
 
-#         return ticker, df
+        # insert values for each data line into df
+        for i, item in enumerate(self.data_line):
+            df.insert(loc=i, column=f"{item.lower()}", value=eval(item.lower()), allow_duplicates=True)
+
+        return ticker, df
 
 
 class YahooFinanceDataProcessor(BaseProcessor):
@@ -386,10 +391,13 @@ class YahooFinanceDataProcessor(BaseProcessor):
         # except Exception as e:
         #     logger.debug(f"*** ERROR *** {e}")
         # else:
+        #     # pickle ticker, yf_df
+        #     with open(f"{self.work_dir}{ticker}.yf.pkl", "wb") as pkl:
+        #         pickle.dump((ticker, yf_df), pkl)
         #     yield ticker, yf_df
 
         # yield data from saved pickle file
-        with open(f"{self.work_dir}{ticker}.pkl", "rb") as pkl:
+        with open(f"{self.work_dir}{ticker}.yf.pkl", "rb") as pkl:
             ticker, df = pickle.load((pkl))
         yield ticker, df
 

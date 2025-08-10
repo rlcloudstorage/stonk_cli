@@ -74,10 +74,10 @@ config_dict['default']['debug'] = config_obj.getboolean('default', 'debug')
 # Add main config path to config_dict
 config_dict['default']['cfg_main'] = config_file
 
-# Add api token to data_serv
-config_dict['data_service']['token_alphavantage'] = os.getenv('TOKEN_ALPHAVANTAGE')
-config_dict['data_service']['token_alphavantage_1'] = os.getenv('TOKEN_ALPHAVANTAGE_1')
-config_dict['data_service']['token_tiingo'] = os.getenv('TOKEN_TIINGO')
+# # Add api token to data_serv
+# config_dict['data_service']['token_alphavantage'] = os.getenv('TOKEN_ALPHAVANTAGE')
+# config_dict['data_service']['token_alphavantage_1'] = os.getenv('TOKEN_ALPHAVANTAGE_1')
+# config_dict['data_service']['token_tiingo'] = os.getenv('TOKEN_TIINGO')
 
 # Print/log some debug information
 DEBUG = config_dict['default']['debug']

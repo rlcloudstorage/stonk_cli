@@ -44,7 +44,7 @@ def cli(ctx, arguments):
         )
     else:  # use symbols in data_service data_list
         # ticker_list = sorted(list(ctx["default"]["indicator"].split(" ")) + list(ctx["default"]["target"].split(" ")))
-        ticker_list = sorted(list(ctx["default"]["target"].split(" ")))
+        ticker_list = sorted(list(ctx["default"]["ticker"].split(" ")))
         ctx["interface"]["database"] = click.prompt(
             f"* Using database 'default.db'. Type a new database name to change,\n  press Enter to accept",
             default="default.db",

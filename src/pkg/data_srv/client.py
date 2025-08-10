@@ -18,7 +18,7 @@ def fetch_stonk_data(ctx:dict)->None:
         print(" Begin download process:")
 
     # create database
-    utils.create_sqlite_stonk_database(ctx=ctx)
+    # utils.create_sqlite_stonk_database(ctx=ctx)
 
     # select data provider
     processor = _select_data_provider(ctx=ctx)
@@ -29,7 +29,7 @@ def fetch_stonk_data(ctx:dict)->None:
 
         ctx['interface']['index'] = index  # alphavantage may throttle at five downloads
         data_tuple = processor.download_and_parse_price_data(ticker=ticker)
-        utils.write_data_line_to_stonk_table(ctx=ctx, data_tuple=data_tuple)
+        # utils.write_data_line_to_stonk_table(ctx=ctx, data_tuple=data_tuple)
 
     if not DEBUG:
         print(" finished.")
