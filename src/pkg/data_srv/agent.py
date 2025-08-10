@@ -388,7 +388,7 @@ class YahooFinanceDataProcessor(BaseProcessor):
         # else:
         #     yield ticker, yf_df
 
-        # yield data from saved pickle
+        # yield data from saved pickle file
         with open(f"{self.work_dir}{ticker}.pkl", "rb") as pkl:
             ticker, df = pickle.load((pkl))
         yield ticker, df
@@ -399,24 +399,26 @@ class YahooFinanceDataProcessor(BaseProcessor):
             logger.debug(f"_process_yfinance_data(data_gen={type(data_gen)})")
 
         ticker, yf_df = next(data_gen)
+        # remove unused columns
         yf_df = yf_df.drop(columns=yf_df.columns.values[-3:], axis=1)
         if DEBUG: logger.debug(f"ticker: {ticker}, yf_df:\n{yf_df}")
-        # create empty dataframe with index as a timestamp
+
+        # create empty dataframe with index as a timestamp, trim off minutes seconds
         df = pd.DataFrame(index=yf_df.index.values.astype(int) // 10**9)
         df.index.name = "date"
 
-        # # difference between the close and open price
-        # clop = list(round((yf_df["Close"] - yf_df["Open"]) * 100).astype(int))
-        # if DEBUG: logger.debug(f"clop: {clop} {type(clop)}")
+        # difference between the close and open price
+        clop = list(round((yf_df["Close"] - yf_df["Open"]) * 100).astype(int))
+        if DEBUG: logger.debug(f"clop: {clop} {type(clop)}")
 
-        # # close location value, relative to the high-low range
-        # try:
-        #     clv = list(
-        #         round((2 * yf_df["Close"] - yf_df["Low"] - yf_df["High"]) / (yf_df["High"] - yf_df["Low"]) * 100)
-        #     )
-        #     if DEBUG: logger.debug(f"clv: {clv} {type(clv)}")
-        # except ZeroDivisionError as e:
-        #     logger.debug(f"*** ERROR *** {e}")
+        # close location value, relative to the high-low range
+        try:
+            clv = list(
+                round((2 * yf_df["Close"] - yf_df["Low"] - yf_df["High"]) / (yf_df["High"] - yf_df["Low"]) * 100
+            ).astype(int))
+            if DEBUG: logger.debug(f"clv: {clv} {type(clv)}")
+        except ZeroDivisionError as e:
+            logger.debug(f"*** ERROR *** {e}")
 
         # close weighted average price exclude open price
         cwap = list(round(
@@ -424,24 +426,24 @@ class YahooFinanceDataProcessor(BaseProcessor):
         ).astype(int))
         if DEBUG: logger.debug(f"cwap array: {cwap} {type(cwap)}")
 
-        cwap = self._sliding_window_scaled_data(data_list=cwap)
-        if DEBUG: logger.debug(f"scaled cwap: {cwap} {type(cwap)} len {len(cwap)}")
+        sc_cwap = self._sliding_window_scaled_data(data_list=cwap)
+        if DEBUG: logger.debug(f"scaled cwap: {sc_cwap} {type(sc_cwap)} len {len(cwap)}")
 
-        # # difference between the high and low price
-        # hilo = list(round((yf_df["High"] - yf_df["Low"]) * 100).astype(int))
-        # if DEBUG: logger.debug(f"hilo: {hilo} {type(hilo)}")
+        # difference between the high and low price
+        hilo = list(round((yf_df["High"] - yf_df["Low"]) * 100).astype(int))
+        if DEBUG: logger.debug(f"hilo: {hilo} {type(hilo)}")
 
         # number of shares traded
         volume = list(yf_df["Volume"])
         if DEBUG: logger.debug(f"volume array: {volume} {type(volume)}")
 
-        volume = self._sliding_window_scaled_data(data_list=volume)
-        if DEBUG: logger.debug(f"scaled volume: {volume} {type(volume)} len {len(volume)}")
+        sc_vol = self._sliding_window_scaled_data(data_list=volume)
+        if DEBUG: logger.debug(f"scaled volume: {sc_vol} {type(sc_vol)} len {len(volume)}")
 
-        # # price times number of shares traded
-        # mass = np.array(cwap * volume).reshape(-1, 1)
-        # mass = np.rint((self.scaler.fit_transform(mass).flatten() + 10) * 100).astype(int)
-        # if DEBUG: logger.debug(f"scaled_mass: {mass} {type(mass)}")
+        # price times number of shares traded
+        mass = [c * v for c, v in zip(cwap, volume)]
+        sc_mass = self._sliding_window_scaled_data(data_list=mass)
+        if DEBUG: logger.debug(f"scaled_mass: {sc_mass} {type(sc_mass)}")
 
         # insert values for each data line into df
         for i, item in enumerate(self.data_line):

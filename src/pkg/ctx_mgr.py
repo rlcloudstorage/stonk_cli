@@ -68,14 +68,14 @@ class SqliteConnectManager:
     import sqlite3
 
     def __init__(self, ctx:dict, mode:str='ro'):
-        self.ctx = ctx
-        self.db_path = f"{ctx['default']['work_dir']}data/{ctx['interface']['database']}"
+        # self.ctx = ctx
+        self.db_path = f"{ctx['default']['work_dir']}{ctx['interface']['command']}/{ctx['interface']['database']}"
         self.mode = mode
 
     def __repr__(self):
         return (
             f"{self.__class__.__name__}("
-            f"ctx={type(self.ctx)}, "
+            # f"ctx={type(self.ctx)}, "
             f"db_path='{self.db_path}', "
             f"mode='{self.mode}')"
             )
@@ -85,7 +85,6 @@ class SqliteConnectManager:
         try:
             self.connection = self.sqlite3.connect(
                 f'file:{os.path.abspath(self.db_path)}?mode={self.mode}',
-                # detect_types=sqlite3.PARSE_DECLTYPES, uri=True
                 detect_types=self.sqlite3.PARSE_DECLTYPES | self.sqlite3.PARSE_COLNAMES, uri=True
             )
             self.cursor = self.connection.cursor()
