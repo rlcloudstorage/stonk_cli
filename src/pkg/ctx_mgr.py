@@ -3,6 +3,7 @@ class DatabaseConnectionManager - sqlite3\n
 class SpinnerManager - spinner for command line\n
 class WebDriverManager - selenium webdriver
 """
+
 import logging
 import os
 
@@ -14,38 +15,44 @@ logger = logging.getLogger(__name__)
 
 class SpinnerManager:
     """Manage a simple spinner object"""
+
     import sys
     import threading
     from time import sleep
+
     busy = False
     delay = 0.2
 
     @staticmethod
     def spinning_cursor():
         while 1:
-            for cursor in '|/-\\': yield cursor
+            for cursor in "|/-\\":
+                yield cursor
 
     def __init__(self, delay=None):
         self.spinner_generator = self.spinning_cursor()
-        if delay and float(delay): self.delay = delay
+        if delay and float(delay):
+            self.delay = delay
 
     def spinner_task(self):
         while self.busy:
             self.sys.stdout.write(next(self.spinner_generator))
             self.sys.stdout.flush()
             self.sleep(self.delay)
-            self.sys.stdout.write('\b')
+            self.sys.stdout.write("\b")
             self.sys.stdout.flush()
 
     def __enter__(self):
         self.busy = True
-        if DEBUG: logger.debug("SpinnerManager().__enter__()")
+        if DEBUG:
+            logger.debug("SpinnerManager().__enter__()")
         self.threading.Thread(target=self.spinner_task).start()
 
     def __exit__(self, exception, value, tb):
         self.busy = False
         self.sleep(self.delay)
-        if DEBUG: logger.debug("SpinnerManager().__exit__()")
+        if DEBUG:
+            logger.debug("SpinnerManager().__exit__()")
         if exception is not None:
             return False
 
@@ -65,37 +72,36 @@ class SqliteConnectManager:
     -------
     An Sqlite3 connection object.\n
     """
+
     import sqlite3
 
-    def __init__(self, ctx:dict, mode:str='ro'):
+    def __init__(self, ctx: dict, mode: str = "ro"):
         # self.ctx = ctx
         self.db_path = f"{ctx['default']['work_dir']}{ctx['interface']['command']}/{ctx['interface']['database']}"
         self.mode = mode
 
     def __repr__(self):
-        return (
-            f"{self.__class__.__name__}("
-            # f"ctx={type(self.ctx)}, "
-            f"db_path='{self.db_path}', "
-            f"mode='{self.mode}')"
-            )
+        return f"{self.__class__.__name__}(db_path='{self.db_path}', mode='{self.mode}')"
 
     def __enter__(self):
-        if DEBUG: logger.debug(f"{self}.__enter__()")
+        if DEBUG:
+            logger.debug(f"{self}.__enter__()")
         try:
             self.connection = self.sqlite3.connect(
-                f'file:{os.path.abspath(self.db_path)}?mode={self.mode}',
-                detect_types=self.sqlite3.PARSE_DECLTYPES | self.sqlite3.PARSE_COLNAMES, uri=True
+                f"file:{os.path.abspath(self.db_path)}?mode={self.mode}",
+                detect_types=self.sqlite3.PARSE_DECLTYPES | self.sqlite3.PARSE_COLNAMES,
+                uri=True,
             )
             self.cursor = self.connection.cursor()
-            if DEBUG: logger.debug(f"cursor: {self.cursor}")
-
+            if DEBUG:
+                logger.debug(f"cursor: {self.cursor}")
             return self
         except self.sqlite3.Error as e:
-            print(f'{e}: {self.db_path}')
+            print(f"{e}: {self.db_path}")
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
-        if DEBUG: logger.debug(f"{self.__class__.__name__}.__exit__()")
+        if DEBUG:
+            logger.debug(f"{self.__class__.__name__}.__exit__()")
         self.cursor.close()
         if isinstance(exc_value, Exception):
             self.connection.rollback()

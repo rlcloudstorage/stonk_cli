@@ -1,4 +1,5 @@
 """src/pkg/cli/main_console.py"""
+
 import logging
 import os
 
@@ -30,9 +31,9 @@ class MyMultiCommand(click.MultiCommand):
 
 
 @click.command(cls=MyMultiCommand)
-
 @click.pass_context
 def start_cli(ctx):
     """"""
     ctx.obj = config_dict
-    if DEBUG: logger.debug(f"start_cli(ctx={type(ctx)})")
+    if DEBUG:
+        logger.debug(f"start_cli(ctx={type(ctx)})")

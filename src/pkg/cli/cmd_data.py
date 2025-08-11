@@ -59,7 +59,7 @@ def cli(ctx, arguments):
 
     ctx["interface"]["window_size"] = click.prompt(
         f"* Using sliding window size {ctx['default']['window_size']}. Type a new value to change,\n  press Enter to accept",
-        default=ctx['default']['window_size'],
+        default=ctx["default"]["window_size"],
     )
 
     if click.confirm(

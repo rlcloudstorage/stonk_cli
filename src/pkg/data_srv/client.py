@@ -40,9 +40,6 @@ def _select_data_provider(ctx:dict)->object:
     if DEBUG: logger.debug(f"_select_data_provider(ctx={type(ctx)})")
 
     match ctx['data_service']['data_provider']:
-        case "alphavantage":
-            from pkg.data_srv.agent import AlphaVantageDataProcessor
-            return AlphaVantageDataProcessor(ctx=ctx)
         case "tiingo":
             from pkg.data_srv.agent import TiingoDataProcessor
             return TiingoDataProcessor(ctx=ctx)
