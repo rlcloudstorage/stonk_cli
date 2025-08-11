@@ -43,7 +43,14 @@ def cli(ctx, arguments):
             default="custom.db",
         )
     else:  # use symbols from default ticker list
-        ticker_list = sorted(list(ctx["default"]["ticker"].split(" ")))
+        if ctx["data_service"]["data_list"]:
+            ticker_list = sorted(list(ctx["data_service"]["data_list"].split(" ")))
+        else:
+            try:
+                ticker_list = sorted(list(ctx["default"]["ticker"].split(" ")))
+            except:
+                click.echo(message="Add tickers to data_list in data_service/cfg_data.ini file.")
+
         ctx["interface"]["database"] = click.prompt(
             f"* Using database 'default.db'. Type a new database name to change,\n  press Enter to accept",
             default="default.db",

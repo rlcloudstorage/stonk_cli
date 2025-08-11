@@ -67,10 +67,10 @@ class WebScraper:
         driver.get(self.base_url)
 
         try:
+            self._set_indicator_RSI(driver=driver)
             self._set_chart_size_landscape(driver=driver)
             self._set_chart_color_dark(driver=driver)
-            self._set_indicator_RSI(driver=driver)
-            self._click_update_button(driver=driver)
+            # self._click_update_button(driver=driver)
             self.url = self._get_chart_src_attribute(driver=driver)
             self._fetch_stockchart(url=self.url)
         except (ElementClickInterceptedException,

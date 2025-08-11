@@ -53,8 +53,13 @@ def cli(ctx, arguments, opt_trans):
     if arguments:  # download charts in arguments list
         ctx["interface"]["arguments"] = sorted([a.upper() for a in list(arguments)])
     else:  # use chart_service chart_list
-        # ctx["interface"]["arguments"] = sorted(list(ctx["chart_service"]["chart_list"].split(" ")))
-        ctx["interface"]["arguments"] = sorted(list(ctx["default"]["ticker"].split(" ")))
+        if ctx["chart_service"]["chart_list"]:
+            ctx["interface"]["arguments"] = sorted(list(ctx["chart_service"]["chart_list"].split(" ")))
+        else:
+            try:
+                ctx["interface"]["arguments"] = sorted(list(ctx["default"]["ticker"].split(" ")))
+            except:
+                click.echo(message="Add tickers to chart_list in chart_service/cfg_chart.ini file.")
 
     # Add 'opt_trans' to 'interface' ctx
     if opt_trans:  # use period_dict value
@@ -71,6 +76,6 @@ def cli(ctx, arguments, opt_trans):
         # Download charts
         from pkg.chart_srv import client
 
-        client.begin_chart_download(ctx)
+        # client.begin_chart_download(ctx)
     else:  # Print default message
         click.echo("Goodby.")
