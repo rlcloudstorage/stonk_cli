@@ -38,7 +38,7 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3 :: Only",
 ]
-dependencies = ["click", "python-dotenv", "scikit-learn", "tiingo", "yfinance",]
+dependencies = ["click", "pillow", "python-dotenv", "scikit-learn", "selenium", "tiingo", "yfinance",]
 
 [project.optional-dependencies]
 # List additional groups of dependencies here (e.g. development

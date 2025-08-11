@@ -53,7 +53,8 @@ def cli(ctx, arguments, opt_trans):
     if arguments:  # download charts in arguments list
         ctx["interface"]["arguments"] = sorted([a.upper() for a in list(arguments)])
     else:  # use chart_service chart_list
-        ctx["interface"]["arguments"] = sorted(list(ctx["chart_service"]["chart_list"].split(" ")))
+        # ctx["interface"]["arguments"] = sorted(list(ctx["chart_service"]["chart_list"].split(" ")))
+        ctx["interface"]["arguments"] = sorted(list(ctx["default"]["ticker"].split(" ")))
 
     # Add 'opt_trans' to 'interface' ctx
     if opt_trans:  # use period_dict value
