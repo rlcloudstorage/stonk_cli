@@ -3,7 +3,6 @@ Collect open, high, low, close, volume \n
 (ohlc) data from various online sources.\n
 Process data into lines; volume, average price,\n
 close location value, etc. Returns a tuple.\n
-class AlphaVantageDataProcessor\n
 class TiingoDataProcessor\n
 class YahooFinanceDataProcessor
 """
@@ -28,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 class BaseProcessor:
     """"""
+
     def __init__(self, ctx: dict):
         self.data_line = ctx["interface"]["data_line"]
         self.data_provider = ctx["data_service"]["data_provider"]
@@ -48,7 +48,8 @@ class BaseProcessor:
 
     def _sliding_window_scaled_data(self, data_list: list):
         """"""
-        if DEBUG: logger.debug(f"_sliding_window_scaled_data(data_list={data_list})")
+        if DEBUG:
+            logger.debug(f"_sliding_window_scaled_data(data_list={data_list})")
 
         scaled_data = list()
         v = sliding_window_view(x=data_list, window_shape=self.window_size)
@@ -66,9 +67,11 @@ class BaseProcessor:
         """Uses config file [data_service][sklearn_scaler] value"""
         if scaler == "MinMaxScaler":
             from sklearn.preprocessing import MinMaxScaler
+
             return MinMaxScaler()
         elif scaler == "RobustScaler":
             from sklearn.preprocessing import RobustScaler
+
             # return RobustScaler(quantile_range=(0.0, 100.0))
             return RobustScaler()
 
@@ -93,7 +96,7 @@ class TiingoDataProcessor(BaseProcessor):
 
     def __init__(self, ctx: dict):
         super().__init__(ctx=ctx)
-        self.api_key = {os.getenv('TOKEN_TIINGO')}
+        self.api_key = {os.getenv("TOKEN_TIINGO")}
         self.frequency = ctx["data_service"]["data_frequency"]
 
     def __repr__(self):
@@ -117,30 +120,30 @@ class TiingoDataProcessor(BaseProcessor):
         config = {}
         # To reuse the same HTTP Session across API calls
         # (and have better performance), include a session key.
-        config['session'] = True
+        config["session"] = True
         # If you don't have your API key as an environment variable,
         # pass it in via a configuration dictionary.
-        config['api_key'] = self.api_key
-        config['api_key'] = os.getenv('TOKEN_TIINGO')
+        config["api_key"] = self.api_key
+        config["api_key"] = os.getenv("TOKEN_TIINGO")
         # Initialize
         client = self.TiingoClient(config)
 
-        # try:
-        #     historical_prices = client.get_ticker_price(
-        #         ticker=ticker, fmt='json', startDate=self.start_date, endDate=self.end_date, frequency=self.frequency
-        #     )
-        # except Exception as e:
-        #     logger.debug(f"*** ERROR *** {e}")
-        # else:
-        #     # # pickle ticker, historical_prices
-        #     # with open(f"{self.work_dir}{ticker}.t.pkl", "wb") as pkl:
-        #     #     pickle.dump((ticker, historical_prices), pkl)
-        #     yield ticker, historical_prices
+        try:
+            historical_prices = client.get_ticker_price(
+                ticker=ticker, fmt='json', startDate=self.start_date, endDate=self.end_date, frequency=self.frequency
+            )
+        except Exception as e:
+            logger.debug(f"*** ERROR *** {e}")
+        else:
+            # # pickle ticker, historical_prices
+            # with open(f"{self.work_dir}{ticker}.t.pkl", "wb") as pkl:
+            #     pickle.dump((ticker, historical_prices), pkl)
+            yield ticker, historical_prices
 
-        # yield data from saved pickle file
-        with open(f"{self.work_dir}{ticker}.t.pkl", "rb") as pkl:
-            ticker, historical_prices = pickle.load((pkl))
-        yield ticker, historical_prices
+        # # yield data from saved pickle file
+        # with open(f"{self.work_dir}{ticker}.t.pkl", "rb") as pkl:
+        #     ticker, historical_prices = pickle.load((pkl))
+        # yield ticker, historical_prices
 
     def _process_tiingo_data(self, data_gen: object) -> list[tuple]:
         """Returns a tuple (ticker, dataframe)"""
@@ -160,7 +163,8 @@ class TiingoDataProcessor(BaseProcessor):
 
         # difference between the close and open price
         clop = [round((d["adjClose"] - d["adjOpen"]) * 100) for d in dict_list]
-        if DEBUG: logger.debug(f"clop: {clop} {type(clop)}")
+        if DEBUG:
+            logger.debug(f"clop: {clop} {type(clop)}")
 
         # close location value, relative to the high-low range
         try:
@@ -168,32 +172,39 @@ class TiingoDataProcessor(BaseProcessor):
                 round(((2 * d["adjClose"] - d["adjLow"] - d["adjHigh"]) / (d["adjHigh"] - d["adjLow"])) * 100)
                 for d in dict_list
             ]
-            if DEBUG: logger.debug(f"clv: {clv} {type(clv)}")
+            if DEBUG:
+                logger.debug(f"clv: {clv} {type(clv)}")
         except ZeroDivisionError as e:
             logger.debug(f"*** ERROR *** {e}")
 
         # close weighted average price exclude open price
         cwap = [round(((d["adjHigh"] + d["adjLow"] + 2 * d["adjClose"]) / 4) * 100) for d in dict_list]
-        if DEBUG: logger.debug(f"cwap array: {cwap} {type(cwap)}")
+        if DEBUG:
+            logger.debug(f"cwap array: {cwap} {type(cwap)}")
 
         sc_cwap = self._sliding_window_scaled_data(data_list=cwap)
-        if DEBUG: logger.debug(f"scaled cwap: {sc_cwap} {type(sc_cwap)} len {len(cwap)}")
+        if DEBUG:
+            logger.debug(f"scaled cwap: {sc_cwap} {type(sc_cwap)} len {len(cwap)}")
 
         # difference between the high and low price
         hilo = [round((d["adjHigh"] - d["adjLow"]) * 100) for d in dict_list]
-        if DEBUG: logger.debug(f"hilo: {hilo} {type(hilo)}")
+        if DEBUG:
+            logger.debug(f"hilo: {hilo} {type(hilo)}")
 
         # number of shares traded
         volume = [d["adjVolume"] for d in dict_list]
-        if DEBUG: logger.debug(f"volume array: {volume} {type(volume)}")
+        if DEBUG:
+            logger.debug(f"volume array: {volume} {type(volume)}")
 
         sc_vol = self._sliding_window_scaled_data(data_list=volume)
-        if DEBUG: logger.debug(f"scaled volume: {sc_vol} {type(sc_vol)} len {len(volume)}")
+        if DEBUG:
+            logger.debug(f"scaled volume: {sc_vol} {type(sc_vol)} len {len(volume)}")
 
         # price times number of shares traded
         mass = [c * v for c, v in zip(cwap, volume)]
         sc_mass = self._sliding_window_scaled_data(data_list=mass)
-        if DEBUG: logger.debug(f"scaled_mass: {sc_mass} {type(sc_mass)}")
+        if DEBUG:
+            logger.debug(f"scaled_mass: {sc_mass} {type(sc_mass)}")
 
         # insert values for each data line into df
         for i, item in enumerate(self.data_line):
@@ -234,21 +245,21 @@ class YahooFinanceDataProcessor(BaseProcessor):
         if DEBUG:
             logger.debug(f"_yfinance_data_generator(ticker={ticker})")
 
-        # try:
-        #     yf_data = self.yf.Ticker(ticker=ticker)
-        #     yf_df = yf_data.history(start=self.start_date, end=self.end_date, interval=self.interval)
-        # except Exception as e:
-        #     logger.debug(f"*** ERROR *** {e}")
-        # else:
-        #     # pickle ticker, yf_df
-        #     with open(f"{self.work_dir}{ticker}.yf.pkl", "wb") as pkl:
-        #         pickle.dump((ticker, yf_df), pkl)
-        #     yield ticker, yf_df
+        try:
+            yf_data = self.yf.Ticker(ticker=ticker)
+            yf_df = yf_data.history(start=self.start_date, end=self.end_date, interval=self.interval)
+        except Exception as e:
+            logger.debug(f"*** ERROR *** {e}")
+        else:
+            # # pickle ticker, yf_df
+            # with open(f"{self.work_dir}{ticker}.yf.pkl", "wb") as pkl:
+            #     pickle.dump((ticker, yf_df), pkl)
+            yield ticker, yf_df
 
-        # yield data from saved pickle file
-        with open(f"{self.work_dir}{ticker}.yf.pkl", "rb") as pkl:
-            ticker, df = pickle.load((pkl))
-        yield ticker, df
+        # # yield data from saved pickle file
+        # with open(f"{self.work_dir}{ticker}.yf.pkl", "rb") as pkl:
+        #     ticker, df = pickle.load((pkl))
+        # yield ticker, df
 
     def _process_yfinance_data(self, data_gen: object) -> pd.DataFrame:
         """Returns a tuple (ticker, dataframe)"""
@@ -258,7 +269,8 @@ class YahooFinanceDataProcessor(BaseProcessor):
         ticker, yf_df = next(data_gen)
         # remove unused columns
         yf_df = yf_df.drop(columns=yf_df.columns.values[-3:], axis=1)
-        if DEBUG: logger.debug(f"ticker: {ticker}, yf_df:\n{yf_df}")
+        if DEBUG:
+            logger.debug(f"ticker: {ticker}, yf_df:\n{yf_df}")
 
         # create empty dataframe with index as a timestamp, trim off minutes seconds
         df = pd.DataFrame(index=yf_df.index.values.astype(int) // 10**9)
@@ -266,41 +278,49 @@ class YahooFinanceDataProcessor(BaseProcessor):
 
         # difference between the close and open price
         clop = list(round((yf_df["Close"] - yf_df["Open"]) * 100).astype(int))
-        if DEBUG: logger.debug(f"clop: {clop} {type(clop)}")
+        if DEBUG:
+            logger.debug(f"clop: {clop} {type(clop)}")
 
         # close location value, relative to the high-low range
         try:
             clv = list(
-                round((2 * yf_df["Close"] - yf_df["Low"] - yf_df["High"]) / (yf_df["High"] - yf_df["Low"]) * 100
-            ).astype(int))
-            if DEBUG: logger.debug(f"clv: {clv} {type(clv)}")
+                round(
+                    (2 * yf_df["Close"] - yf_df["Low"] - yf_df["High"]) / (yf_df["High"] - yf_df["Low"]) * 100
+                ).astype(int)
+            )
+            if DEBUG:
+                logger.debug(f"clv: {clv} {type(clv)}")
         except ZeroDivisionError as e:
             logger.debug(f"*** ERROR *** {e}")
 
         # close weighted average price exclude open price
-        cwap = list(round(
-            (2 * yf_df["Close"] + yf_df["High"] + yf_df["Low"]) * 25
-        ).astype(int))
-        if DEBUG: logger.debug(f"cwap array: {cwap} {type(cwap)}")
+        cwap = list(round((2 * yf_df["Close"] + yf_df["High"] + yf_df["Low"]) * 25).astype(int))
+        if DEBUG:
+            logger.debug(f"cwap array: {cwap} {type(cwap)}")
 
         sc_cwap = self._sliding_window_scaled_data(data_list=cwap)
-        if DEBUG: logger.debug(f"scaled cwap: {sc_cwap} {type(sc_cwap)} len {len(cwap)}")
+        if DEBUG:
+            logger.debug(f"scaled cwap: {sc_cwap} {type(sc_cwap)} len {len(cwap)}")
 
         # difference between the high and low price
         hilo = list(round((yf_df["High"] - yf_df["Low"]) * 100).astype(int))
-        if DEBUG: logger.debug(f"hilo: {hilo} {type(hilo)}")
+        if DEBUG:
+            logger.debug(f"hilo: {hilo} {type(hilo)}")
 
         # number of shares traded
         volume = list(yf_df["Volume"])
-        if DEBUG: logger.debug(f"volume array: {volume} {type(volume)}")
+        if DEBUG:
+            logger.debug(f"volume array: {volume} {type(volume)}")
 
         sc_vol = self._sliding_window_scaled_data(data_list=volume)
-        if DEBUG: logger.debug(f"scaled volume: {sc_vol} {type(sc_vol)} len {len(volume)}")
+        if DEBUG:
+            logger.debug(f"scaled volume: {sc_vol} {type(sc_vol)} len {len(volume)}")
 
         # price times number of shares traded
         mass = [c * v for c, v in zip(cwap, volume)]
         sc_mass = self._sliding_window_scaled_data(data_list=mass)
-        if DEBUG: logger.debug(f"scaled_mass: {sc_mass} {type(sc_mass)}")
+        if DEBUG:
+            logger.debug(f"scaled_mass: {sc_mass} {type(sc_mass)}")
 
         # insert values for each data line into df
         for i, item in enumerate(self.data_line):

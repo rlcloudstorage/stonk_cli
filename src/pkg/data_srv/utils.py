@@ -1,6 +1,7 @@
 """src/pkg/data_srv/utils.py\n
-create_sqlite_indicator_database(ctx: dict) -> None\n
-write_indicator_data_to_sqlite_db(ctx: dict, data_tuple: tuple)->None"""
+create_sqlite_ohlc_database(ctx: dict) -> None\n
+create_sqlite_stonk_database(ctx: dict) -> None\n
+write_data_line_to_stonk_table(ctx: dict, data_tuple: tuple) -> None"""
 
 import logging
 
@@ -15,19 +16,23 @@ logger = logging.getLogger(__name__)
 
 def create_sqlite_ohlc_database(ctx: dict) -> None:
     """Create sqlite3 database. Table for each ticker symbol, column for ohlc."""
-    if DEBUG: logger.debug(f"create_sqlite_ohlc_database(ctx={ctx})")
+    if DEBUG:
+        logger.debug(f"create_sqlite_ohlc_database(ctx={ctx})")
 
     # create data folder in users work_dir
     Path(f"{ctx['default']['work_dir']}{ctx['interface']['command']}").mkdir(parents=True, exist_ok=True)
     # if old database exists remove it
-    Path(f"{ctx['default']['work_dir']}{ctx['interface']['command']}/{ctx['interface']['database']}").unlink(missing_ok=True)
+    Path(f"{ctx['default']['work_dir']}{ctx['interface']['command']}/{ctx['interface']['database']}").unlink(
+        missing_ok=True
+    )
 
     try:
         with SqliteConnectManager(ctx=ctx, mode="rwc") as con:
             # create table for each ticker symbol
             for table in ctx["interface"]["ticker"]:
                 # create ohlc table for ticker
-                con.cursor.execute(f"""
+                con.cursor.execute(
+                    f"""
                     CREATE TABLE {table} (
                         date      INTEGER    NOT NULL,
                         Open      INTEGER,
@@ -53,7 +58,9 @@ def create_sqlite_stonk_database(ctx: dict) -> None:
     # create data folder in users work_dir
     Path(f"{ctx['default']['work_dir']}{ctx['interface']['command']}").mkdir(parents=True, exist_ok=True)
     # if old database exists remove it
-    Path(f"{ctx['default']['work_dir']}{ctx['interface']['command']}/{ctx['interface']['database']}").unlink(missing_ok=True)
+    Path(f"{ctx['default']['work_dir']}{ctx['interface']['command']}/{ctx['interface']['database']}").unlink(
+        missing_ok=True
+    )
 
     try:
         with SqliteConnectManager(ctx=ctx, mode="rwc") as con:
@@ -81,10 +88,12 @@ def create_sqlite_stonk_database(ctx: dict) -> None:
         print(f"\n Created db: '{con.db_path}'")
 
 
-def write_data_line_to_stonk_table(ctx: dict, data_tuple: tuple)->None:
+def write_data_line_to_stonk_table(ctx: dict, data_tuple: tuple) -> None:
     """"""
     if DEBUG:
-        logger.debug(f"write_data_line_to_stonk_table(ctx={ctx}, data_tuple[0]: {data_tuple[0]}, data_tuple[1]:\n{data_tuple[1]})")
+        logger.debug(
+            f"write_data_line_to_stonk_table(ctx={ctx}, data_tuple[0]: {data_tuple[0]}, data_tuple[1]:\n{data_tuple[1]})"
+        )
     if not DEBUG:
         print(f"writing to db\t")
 
@@ -92,26 +101,12 @@ def write_data_line_to_stonk_table(ctx: dict, data_tuple: tuple)->None:
     data_list = list(data_tuple[1].itertuples(index=True, name=None))
     try:
         with SqliteConnectManager(ctx=ctx, mode="rw") as con:
-            if DEBUG: logger.debug(f"stonk_table: {stonk_table}, data_list: {data_list}, {type(data_list)}")
+            if DEBUG:
+                logger.debug(f"stonk_table: {stonk_table}, data_list: {data_list}, {type(data_list)}")
             # con.cursor.executemany(f"INSERT INTO {stonk_table} VALUES (?,?,?)", data_list)
             con.cursor.executemany(f"INSERT INTO {stonk_table} VALUES (?,?,?,?,?,?,?,?,?)", data_list)
     except con.sqlite3.Error as e:
         logger.debug(f"*** Error *** {e}")
-
-
-# def write_indicator_data_to_sqlite_db(ctx: dict, data_tuple: tuple)->None:
-#     """"""
-#     if DEBUG:
-#         logger.debug(f"write_indicator_data_to_sqlite_db(ctx={type(ctx)}, data_tuple={type(data_tuple)})")
-
-#     if not DEBUG:
-#         print(f"writing to db\t")
-#     try:
-#         with SqliteConnectManager(ctx=ctx, mode="rw") as con:
-#             for row in data_tuple[1].itertuples(index=True, name=None):
-#                 con.cursor.execute(f"INSERT INTO {data_tuple[0]} VALUES (?,?,?,?,?,?,?)", row)
-#     except con.sqlite3.Error as e:
-#         logger.debug(f"*** Error *** {e}")
 
 
 # def write_stonk_data_to_data_line_table(ctx: dict, data_tuple: tuple)->None:

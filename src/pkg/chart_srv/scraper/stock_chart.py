@@ -49,7 +49,8 @@ class WebScraper:
 
     def webscraper(self):
         """Main entry point to class. Directs workflow of webscraper."""
-        if DEBUG: logger.debug(f"webscraper(self={self})")
+        if DEBUG:
+            logger.debug(f"webscraper(self={self})")
 
         # opt = ChromeOptions()
         opt = FirefoxOptions()
@@ -57,9 +58,7 @@ class WebScraper:
         # opt.add_argument(
         #     "--user-agent='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36'"
         # )
-        opt.add_argument(
-            "--user-agent='Mozilla/5.0 (X11; Linux x86_64; rv:136.0) Gecko/20100101 Firefox/136.0'"
-        )
+        opt.add_argument("--user-agent='Mozilla/5.0 (X11; Linux x86_64; rv:136.0) Gecko/20100101 Firefox/136.0'")
         # opt.page_load_strategy = "eager"
         opt.page_load_strategy = "none"
         # driver = Chrome(options=opt)
@@ -73,10 +72,7 @@ class WebScraper:
             # self._click_update_button(driver=driver)
             self.url = self._get_chart_src_attribute(driver=driver)
             self._fetch_stockchart(url=self.url)
-        except (ElementClickInterceptedException,
-                ElementNotInteractableException,
-                TimeoutException,
-                Exception) as e:
+        except (ElementClickInterceptedException, ElementNotInteractableException, TimeoutException, Exception) as e:
             logger.debug(f"*** ERROR *** {e}")
         finally:
             driver.quit()
@@ -85,33 +81,38 @@ class WebScraper:
         """click refresh chart"""
         try:
             button = WebDriverWait(driver=driver, timeout=10).until(
-                EC.element_to_be_clickable((
-                    By.XPATH, "/html/body/div[1]/div[2]/div[5]/div[2]/div[1]/div[1]/div[3]/button[1]"
-                ))
+                EC.element_to_be_clickable(
+                    (By.XPATH, "/html/body/div[1]/div[2]/div[5]/div[2]/div[1]/div[1]/div[3]/button[1]")
+                )
             )
             loc = button.location_once_scrolled_into_view
         except Exception as e:
-            logger.debug(f"_click_update_button(self, driver)\nExpected condition element to be clickable not met.\n{e} Trying alternate XPATH.\n")
+            logger.debug(
+                f"_click_update_button(self, driver)\nExpected condition element to be clickable not met.\n{e} Trying alternate XPATH.\n"
+            )
             try:
                 button = WebDriverWait(driver=driver, timeout=10).until(
-                    EC.element_to_be_clickable((
-                        By.XPATH, "/html/body/div[1]/div[2]/div[6]/div[2]/div[1]/div[1]/div[3]/button[1]"
-                    ))
+                    EC.element_to_be_clickable(
+                        (By.XPATH, "/html/body/div[1]/div[2]/div[6]/div[2]/div[1]/div[1]/div[3]/button[1]")
+                    )
                 )
                 loc = button.location_once_scrolled_into_view
             except Exception as e:
                 logger.debug(f"_click_update_button(self={self}, driver={driver}) {e}")
         finally:
-            if DEBUG: logger.debug(f"button: {button}, loc: {loc}")
+            if DEBUG:
+                logger.debug(f"button: {button}, loc: {loc}")
             button.click()
 
     def _fetch_stockchart(self, url: str) -> object:
         """modify chart url, get image source and save"""
-        if DEBUG: logger.debug(f"_fetch_stockchart(url={url})")
+        if DEBUG:
+            logger.debug(f"_fetch_stockchart(url={url})")
 
         for symbol in self.symbol:
             for period in self.period:
-                if not DEBUG: print(f"  fetching {symbol} {period}...")
+                if not DEBUG:
+                    print(f"  fetching {symbol} {period}...")
                 mod_url = self._modify_query_period_and_symbol(period=period, symbol=symbol)
                 self._get_img_src_convert_bytes_to_png_and_save(url=mod_url, period=period, symbol=symbol)
 
@@ -120,15 +121,18 @@ class WebScraper:
         sleep(1)
         try:
             img_element = WebDriverWait(driver=driver, timeout=10).until(
-                EC.presence_of_element_located((
-                    By.CSS_SELECTOR,
-                    "#chart-image"
-                    # By.XPATH,
-                    # '//*[@id="chart-image"]'
-                ))
+                EC.presence_of_element_located(
+                    (
+                        By.CSS_SELECTOR,
+                        "#chart-image",
+                        # By.XPATH,
+                        # '//*[@id="chart-image"]'
+                    )
+                )
             )
             loc = img_element.location_once_scrolled_into_view
-            if DEBUG: logger.debug(f"img_element: {img_element}, loc: {loc}")
+            if DEBUG:
+                logger.debug(f"img_element: {img_element}, loc: {loc}")
             return img_element.get_attribute("src")
 
         except Exception as e:
@@ -143,7 +147,8 @@ class WebScraper:
         """Get the chart image source and convert the bytes to
         a .png image then save to the chart work directory.
         """
-        if DEBUG: logger.debug(f"_get_img_src_convert_bytes_to_png_and_save(url={url} {type(url)})")
+        if DEBUG:
+            logger.debug(f"_get_img_src_convert_bytes_to_png_and_save(url={url} {type(url)})")
 
         image_src = self.http.request("GET", url, headers={"User-agent": "Mozilla/5.0"})
         image = Image.open(io.BytesIO(image_src.data)).convert("RGB")
@@ -153,7 +158,10 @@ class WebScraper:
         """Use urllib.parse to modify the default query parameters
         with new period, symbol.
         """
-        if DEBUG: logger.debug(f"_modify_query_period_and_symbol(period={period} {type(period)}, symbol={symbol} {type(symbol)})")
+        if DEBUG:
+            logger.debug(
+                f"_modify_query_period_and_symbol(period={period} {type(period)}, symbol={symbol} {type(symbol)})"
+            )
 
         parsed_url = urlparse(url=self.url)
         query_dict = parse_qs(parsed_url.query)
@@ -168,46 +176,48 @@ class WebScraper:
     def _set_chart_color_dark(self, driver: object):
         """set color to night"""
         color_element = WebDriverWait(driver=driver, timeout=10).until(
-            EC.element_to_be_clickable((
-                By.XPATH,
-                '//*[@id="chart-settings-color-scheme-menu"]'
-            ))
+            EC.element_to_be_clickable((By.XPATH, '//*[@id="chart-settings-color-scheme-menu"]'))
         )
         loc = color_element.location_once_scrolled_into_view
-        if DEBUG: logger.debug(f"color_element: {color_element}, loc: {loc}")
+        if DEBUG:
+            logger.debug(f"color_element: {color_element}, loc: {loc}")
 
         color = Select(color_element)
         color.select_by_value("night")
-        if DEBUG: logger.debug(f"color: {color}")
+        if DEBUG:
+            logger.debug(f"color: {color}")
 
     def _set_indicator_RSI(self, driver: object):
         """set indicator overlay toRSI"""
         indicator_element = WebDriverWait(driver=driver, timeout=10).until(
-            EC.element_to_be_clickable((
-                By.CSS_SELECTOR,
-                "#indicator-menu-1"
-                # By.XPATH,
-                # '//*[@id="indicator-menu-1"]'
-            ))
+            EC.element_to_be_clickable(
+                (
+                    By.CSS_SELECTOR,
+                    "#indicator-menu-1",
+                    # By.XPATH,
+                    # '//*[@id="indicator-menu-1"]'
+                )
+            )
         )
         loc = indicator_element.location_once_scrolled_into_view
-        if DEBUG: logger.debug(f"indicator_element: {indicator_element}, loc: {loc}")
+        if DEBUG:
+            logger.debug(f"indicator_element: {indicator_element}, loc: {loc}")
 
         indicator = Select(indicator_element)
         indicator.select_by_value("RSI")
-        if DEBUG: logger.debug(f"indicator: {indicator}")
+        if DEBUG:
+            logger.debug(f"indicator: {indicator}")
 
     def _set_chart_size_landscape(self, driver: object):
         """set chart size to Landscape"""
         size_element = WebDriverWait(driver=driver, timeout=10).until(
-            EC.element_to_be_clickable((
-                By.XPATH,
-                '//*[@id="chart-settings-chart-size-menu"]'
-            ))
+            EC.element_to_be_clickable((By.XPATH, '//*[@id="chart-settings-chart-size-menu"]'))
         )
         loc = size_element.location_once_scrolled_into_view
-        if DEBUG: logger.debug(f"size_element: {size_element}, loc: {loc}")
+        if DEBUG:
+            logger.debug(f"size_element: {size_element}, loc: {loc}")
 
         size = Select(size_element)
         size.select_by_value("Landscape")
-        if DEBUG: logger.debug(f"size: {size}")
+        if DEBUG:
+            logger.debug(f"size: {size}")

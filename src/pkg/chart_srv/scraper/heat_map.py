@@ -43,7 +43,8 @@ class WebScraper:
 
     def webscraper(self):
         """Main entry point to class. Directs workflow of webscraper."""
-        if DEBUG: logger.debug(f"webscraper(self={self})")
+        if DEBUG:
+            logger.debug(f"webscraper(self={self})")
 
         # opt = ChromeOptions()
         opt = FirefoxOptions()
@@ -54,7 +55,8 @@ class WebScraper:
         opt.page_load_strategy = "none"
 
         for period in self.period:
-            if not DEBUG: print(f"  fetching heatmap {period}...")
+            if not DEBUG:
+                print(f"  fetching heatmap {period}...")
             try:
                 # driver = Chrome(options=opt)
                 driver = Firefox(options=opt)
@@ -80,12 +82,14 @@ class WebScraper:
         query_dict["time"] = period
         encoded_params = urlencode(query_dict, doseq=True)
         url = urlunparse(parsed_url._replace(query=encoded_params))
-        if DEBUG: logger.debug(f"_modify_query_time_period()-> {url}")
+        if DEBUG:
+            logger.debug(f"_modify_query_time_period()-> {url}")
         return url
 
     def _get_png_img_bytes(self, driver: object) -> bytes:
         """Get the chart image source and convert the bytes to PNG image"""
-        if DEBUG: logger.debug(f"_get_png_img_bytes(driver{driver})")
+        if DEBUG:
+            logger.debug(f"_get_png_img_bytes(driver{driver})")
 
         canvas_element = WebDriverWait(driver=driver, timeout=10).until(
             EC.presence_of_element_located(
@@ -98,12 +102,14 @@ class WebScraper:
             )
         )
         loc = canvas_element.location_once_scrolled_into_view
-        if DEBUG: logger.debug(f"canvas_element: {canvas_element}, loc: {loc}")
+        if DEBUG:
+            logger.debug(f"canvas_element: {canvas_element}, loc: {loc}")
         return canvas_element.screenshot_as_png
 
     def _save_png_image(self, image_src: bytes, period: str):
         """Save image to the work directory"""
-        if DEBUG: logger.debug(f"_save_png_image(image_src={type(image_src)}, period={period})")
+        if DEBUG:
+            logger.debug(f"_save_png_image(image_src={type(image_src)}, period={period})")
 
         png_image = Image.open(BytesIO(image_src)).convert("RGB")
         png_image.save(os.path.join(self.heatmap_dir, f"SP500_{period.lower()}.png"), "PNG", quality=80)
