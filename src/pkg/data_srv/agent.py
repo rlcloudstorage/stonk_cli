@@ -67,11 +67,12 @@ class BaseProcessor:
         """Uses config file [data_service][sklearn_scaler] value"""
         if scaler == "MinMaxScaler":
             from sklearn.preprocessing import MinMaxScaler
+            # return MinMaxScaler(feature_range=(0, 1))
+            return MinMaxScaler()
 
             return MinMaxScaler()
         elif scaler == "RobustScaler":
             from sklearn.preprocessing import RobustScaler
-
             # return RobustScaler(quantile_range=(0.0, 100.0))
             return RobustScaler()
 

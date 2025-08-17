@@ -30,8 +30,8 @@ if not os.path.isfile(config_file):
 
     # Add the structure to the configparser object
     config_obj.add_section("default")
-    # config_obj.set('default', 'debug', 'True')
-    config_obj.set("default", "debug", "False")
+    config_obj.set('default', 'debug', 'True')
+    # config_obj.set("default", "debug", "False")
     if os.getenv("TICKER"):
         config_obj.set("default", "ticker", os.getenv("TICKER"))
     config_obj.set("default", "window_size", "3")

@@ -75,7 +75,7 @@ def cli(ctx, arguments, opt_trans):
     ):
         # Download charts
         from pkg.chart_srv import client
+        client.begin_chart_download(ctx)
 
-        # client.begin_chart_download(ctx)
     else:  # Print default message
         click.echo("Goodby.")

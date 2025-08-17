@@ -71,11 +71,12 @@ class WebScraper:
             self._set_chart_color_dark(driver=driver)
             # self._click_update_button(driver=driver)
             self.url = self._get_chart_src_attribute(driver=driver)
+            driver.quit()
             self._fetch_stockchart(url=self.url)
         except (ElementClickInterceptedException, ElementNotInteractableException, TimeoutException, Exception) as e:
             logger.debug(f"*** ERROR *** {e}")
-        finally:
-            driver.quit()
+        # finally:
+        #     driver.quit()
 
     def _click_update_button(self, driver: object):
         """click refresh chart"""

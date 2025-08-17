@@ -18,7 +18,7 @@ def begin_chart_download(ctx):
         logger.debug(f"begin_chart_download(ctx={ctx})")
 
     command = ctx["interface"]["command"]
-    # check 'heatmap' folder exists in users 'work_dir', if not create 'heatmap' folder
+    # check folder exists in users 'work_dir', if not create folder
     Path(f"{ctx['default']['work_dir']}/{command}").mkdir(parents=True, exist_ok=True)
 
     if not DEBUG:
