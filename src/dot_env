@@ -16,3 +16,6 @@ DRIVER_PATH=r'\path\to\geckodriver'  # Firefox
 
 # https://api.tiingo.com/tiingo
 TOKEN_TIINGO=<your tiingo api key>
+
+# work directory
+WORK_DIR = <path to your work directory>

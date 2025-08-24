@@ -30,13 +30,8 @@ if not os.path.isfile(config_file):
 
     # Add the structure to the configparser object
     config_obj.add_section("default")
-    config_obj.set('default', 'debug', 'True')
-    # config_obj.set("default", "debug", "False")
-    if os.getenv("TICKER"):
-        config_obj.set("default", "ticker", os.getenv("TICKER"))
-    config_obj.set("default", "window_size", "3")
-    config_obj.set("default", "work_dir", work_dir)
     config_obj.add_section("interface")
+    config_obj.set('default', 'debug', 'True')
 
     # Write the structure to the new file
     with open(config_file, "w") as cf:
@@ -70,17 +65,21 @@ config_dict = dict(
 
 # Convert 'debug' string into a boolean value
 config_dict["default"]["debug"] = config_obj.getboolean("default", "debug")
+DEBUG = config_dict["default"]["debug"]
 
-# Add main config path to config_dict
+# Add to config_dict
+if os.getenv("CHART_LIST"):
+    config_dict["default"]["chart_list"] = os.getenv("CHART_LIST")
+if os.getenv("OHLC_TIC_LIST"):
+    config_dict["default"]["ohlc_tic_list"] = os.getenv("OHLC_TIC_LIST")
+if os.getenv("SIGNAL_TIC_LIST"):
+    config_dict["default"]["signal_tic_list"] = os.getenv("SIGNAL_TIC_LIST")
+config_dict["default"]["work_dir"] = work_dir
 config_dict["default"]["cfg_main"] = config_file
 
 # Print/log some debug information
-DEBUG = config_dict["default"]["debug"]
-
-# if config_dict['default']['debug']: logger.debug(f"""
 if DEBUG:
-    logger.debug(
-        f"""
+    logger.debug(f"""
     root_dir: {root_dir}
     src_dir: {src_dir}
     work_dir: {work_dir}
@@ -88,13 +87,7 @@ if DEBUG:
     logger_conf: {logger_conf}
     config_file: {config_file}
     config_dict: {config_dict}
-"""
-    )
-
-# remove old 'debug.log'
-if os.path.exists("debug.log"):
-    os.remove("debug.log")
-
+""")
 
 # Choose user interface
 def run_cli():

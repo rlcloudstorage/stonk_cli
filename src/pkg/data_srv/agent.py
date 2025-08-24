@@ -11,10 +11,10 @@ import datetime, logging, os, pickle, time
 
 from statistics import fmean
 
+import numpy as np
 import pandas as pd
 
 from dotenv import load_dotenv
-from numpy.lib.stride_tricks import sliding_window_view
 from pkg import DEBUG
 
 
@@ -29,12 +29,12 @@ class BaseProcessor:
     """"""
 
     def __init__(self, ctx: dict):
-        self.data_line = ctx["interface"]["data_line"]
         self.data_provider = ctx["data_service"]["data_provider"]
         self.frequency = ctx["data_service"]["data_frequency"]
         self.lookback = int(ctx["data_service"]["data_lookback"])
         self.scaler = self._set_sklearn_scaler(ctx["data_service"]["sklearn_scaler"])
         self.start_date, self.end_date = self._start_end_date
+        self.signal_line = ctx["interface"]["signal_line"]
         self.window_size = int(ctx["interface"]["window_size"])
         self.work_dir = ctx["default"]["work_dir"]
 
@@ -52,8 +52,9 @@ class BaseProcessor:
             logger.debug(f"_sliding_window_scaled_data(data_list={data_list})")
 
         scaled_data = list()
-        v = sliding_window_view(x=data_list, window_shape=self.window_size)
-
+        v = np.lib.stride_tricks.sliding_window_view(
+            x=data_list, window_shape=self.window_size
+        )
         # scale each row in window view then append last item to scaled_data list
         for row in v:
             scaled_row = self.scaler.fit_transform(X=row.reshape(-1, 1))
@@ -70,7 +71,6 @@ class BaseProcessor:
             # return MinMaxScaler(feature_range=(0, 1))
             return MinMaxScaler()
 
-            return MinMaxScaler()
         elif scaler == "RobustScaler":
             from sklearn.preprocessing import RobustScaler
             # return RobustScaler(quantile_range=(0.0, 100.0))
@@ -98,18 +98,21 @@ class TiingoDataProcessor(BaseProcessor):
     def __init__(self, ctx: dict):
         super().__init__(ctx=ctx)
         self.api_key = {os.getenv("TOKEN_TIINGO")}
+        self.client = ctx["interface"]["client"]
         self.frequency = ctx["data_service"]["data_frequency"]
 
     def __repr__(self):
         return (
             f"{self.__class__.__name__}("
             f"api_token={self.api_key}, "
-            f"data_line={self.data_line}, "
+            f"client={self.client}, "
+            f"signal_line={self.signal_line}, "
             f"data_provider={self.data_provider}, "
             f"frequency={self.frequency}, "
             f"scaler={self.scaler}, "
             f"start_date={self.start_date}, "
-            f"end_date={self.end_date})"
+            f"end_date={self.end_date}), "
+            f"window_size={self.window_size}"
         )
 
     def _tiingo_data_generator(self, ticker: str) -> object:
@@ -160,8 +163,18 @@ class TiingoDataProcessor(BaseProcessor):
                 for d in dict_list
             ]
         )
-        df.index.name = "date"
+        df.index.name = "datetime"
 
+        # process OHLC data
+        if self.client == "ohlc":
+
+            for i, column in enumerate(['adjOpen', 'adjHigh', 'adjLow', 'adjClose', 'adjVolume']):
+                value = [round(d[column], 2) for d in dict_list]
+                df.insert(loc=i, column=column.strip("adj"), value=value, allow_duplicates=True)
+
+            return ticker, df
+
+        # process signal data
         # difference between the close and open price
         clop = [round((d["adjClose"] - d["adjOpen"]) * 100) for d in dict_list]
         if DEBUG:
@@ -221,17 +234,20 @@ class YahooFinanceDataProcessor(BaseProcessor):
 
     def __init__(self, ctx: dict):
         super().__init__(ctx=ctx)
+        self.client = ctx["interface"]["client"]
         self.interval = self._parse_frequency
 
     def __repr__(self):
         return (
             f"{self.__class__.__name__}("
-            f"data_line={self.data_line}, "
+            f"client={self.client}, "
+            f"signal_line={self.signal_line}, "
             f"data_provider={self.data_provider}, "
             f"interval={self.interval}, "
             f"scaler={self.scaler}, "
             f"start_date={self.start_date}, "
-            f"end_date={self.end_date})"
+            f"end_date={self.end_date}), "
+            f"window_size={self.window_size}"
         )
 
     @property
@@ -246,21 +262,21 @@ class YahooFinanceDataProcessor(BaseProcessor):
         if DEBUG:
             logger.debug(f"_yfinance_data_generator(ticker={ticker})")
 
-        try:
-            yf_data = self.yf.Ticker(ticker=ticker)
-            yf_df = yf_data.history(start=self.start_date, end=self.end_date, interval=self.interval)
-        except Exception as e:
-            logger.debug(f"*** ERROR *** {e}")
-        else:
-            # # pickle ticker, yf_df
-            # with open(f"{self.work_dir}{ticker}.yf.pkl", "wb") as pkl:
-            #     pickle.dump((ticker, yf_df), pkl)
-            yield ticker, yf_df
+        # try:
+        #     yf_data = self.yf.Ticker(ticker=ticker)
+        #     yf_df = yf_data.history(start=self.start_date, end=self.end_date, interval=self.interval)
+        # except Exception as e:
+        #     logger.debug(f"*** ERROR *** {e}")
+        # else:
+        #     # # pickle ticker, yf_df
+        #     # with open(f"{self.work_dir}{ticker}.yf.pkl", "wb") as pkl:
+        #     #     pickle.dump((ticker, yf_df), pkl)
+        #     yield ticker, yf_df
 
-        # # yield data from saved pickle file
-        # with open(f"{self.work_dir}{ticker}.yf.pkl", "rb") as pkl:
-        #     ticker, df = pickle.load((pkl))
-        # yield ticker, df
+        # yield data from saved pickle file
+        with open(f"{self.work_dir}{ticker}.yf.pkl", "rb") as pkl:
+            ticker, df = pickle.load((pkl))
+        yield ticker, df
 
     def _process_yfinance_data(self, data_gen: object) -> pd.DataFrame:
         """Returns a tuple (ticker, dataframe)"""
@@ -268,14 +284,23 @@ class YahooFinanceDataProcessor(BaseProcessor):
             logger.debug(f"_process_yfinance_data(data_gen={type(data_gen)})")
 
         ticker, yf_df = next(data_gen)
-        # remove unused columns
+
+        # remove unused columns and rename index
         yf_df = yf_df.drop(columns=yf_df.columns.values[-3:], axis=1)
-        if DEBUG:
-            logger.debug(f"ticker: {ticker}, yf_df:\n{yf_df}")
 
         # create empty dataframe with index as a timestamp, trim off minutes seconds
         df = pd.DataFrame(index=yf_df.index.values.astype(int) // 10**9)
-        df.index.name = "date"
+        df.index.name = "datetime"
+
+        if self.client == "ohlc":  # process OHLC data and return tuple
+            # df = pd.DataFrame(index=yf_df.index.values.astype(int) // 10**9)
+            # df.index.name = "datetime"
+
+            # insert values for each data line into df
+            for i, item in enumerate(yf_df.columns):
+                df.insert(loc=i, column=f"{item}", value=list(round(yf_df[item], 2)), allow_duplicates=True)
+
+            return ticker, df
 
         # difference between the close and open price
         clop = list(round((yf_df["Close"] - yf_df["Open"]) * 100).astype(int))
@@ -324,7 +349,7 @@ class YahooFinanceDataProcessor(BaseProcessor):
             logger.debug(f"scaled_mass: {sc_mass} {type(sc_mass)}")
 
         # insert values for each data line into df
-        for i, item in enumerate(self.data_line):
+        for i, item in enumerate(self.signal_line):
             df.insert(loc=i, column=f"{item.lower()}", value=eval(item.lower()), allow_duplicates=True)
 
         return ticker, df

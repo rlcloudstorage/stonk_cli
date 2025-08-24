@@ -36,16 +36,6 @@ def cli(ctx, arguments, opt_trans):
     """Run chart command"""
     ctx["interface"]["command"] = "chart"
 
-    # Put option flag_value into dictionary of lists
-    period_dict = {
-        "all": ["Daily", "Weekly"],
-        "daily": [
-            "Daily",
-        ],
-        "weekly": [
-            "Weekly",
-        ],
-    }
     if DEBUG:
         logger.debug(f"start_cli(ctx={type(ctx)}, arguments={arguments}, opt_trans={opt_trans})")
 
@@ -57,15 +47,21 @@ def cli(ctx, arguments, opt_trans):
             ctx["interface"]["arguments"] = sorted(list(ctx["chart_service"]["chart_list"].split(" ")))
         else:
             try:
-                ctx["interface"]["arguments"] = sorted(list(ctx["default"]["ticker"].split(" ")))
+                ctx["interface"]["arguments"] = sorted(list(ctx["default"]["chart_list"].split(" ")))
             except:
                 click.echo(message="Add tickers to chart_list in chart_service/cfg_chart.ini file.")
 
+    # Convert option flag_value to a list
+    period_dict = {
+        "all": ["Daily", "Weekly"],
+        "daily": ["Daily",],
+        "weekly": ["Weekly",],
+    }
     # Add 'opt_trans' to 'interface' ctx
-    if opt_trans:  # use period_dict value
-        ctx["interface"]["opt_trans"] = period_dict[opt_trans]
-    else:  # set default value to daily
+    if opt_trans == "False":  # set default value to daily
         ctx["interface"]["opt_trans"] = period_dict["daily"]
+    else:  # use period_dict value
+        ctx["interface"]["opt_trans"] = period_dict[opt_trans]
 
     if DEBUG:
         logger.debug(f"cli(ctx={ctx})")

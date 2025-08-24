@@ -7,6 +7,7 @@ PNG image to work directory.
 import logging, logging.config
 import os
 
+from datetime import date
 from io import BytesIO
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
@@ -111,5 +112,6 @@ class WebScraper:
         if DEBUG:
             logger.debug(f"_save_png_image(image_src={type(image_src)}, period={period})")
 
+        today = str(date.today())
         png_image = Image.open(BytesIO(image_src)).convert("RGB")
-        png_image.save(os.path.join(self.heatmap_dir, f"SP500_{period.lower()}.png"), "PNG", quality=80)
+        png_image.save(os.path.join(self.heatmap_dir, f"SP500_{period.lower()}_{today.replace('-', '')}.png"), "PNG", quality=80)

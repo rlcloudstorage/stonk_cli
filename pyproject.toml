@@ -48,11 +48,7 @@ dependencies = ["click", "pillow", "python-dotenv", "scikit-learn", "selenium", 
 dev = ["black", "coverage", "pytest",]
 
 [project.urls]
-"Homepage" = "https://github.com/pypa/stonk_cli"
-"Bug Reports" = "https://github.com/pypa/stonk_cli/issues"
-"Funding" = "https://donate.pypi.org"
-"Say Thanks!" = "http://saythanks.io/to/example"
-"Source" = "https://github.com/pypa/stonk_cli/"
+"Source" = "https://github.com/rlcloudstorage/stonk_cli"
 
 [project.scripts]
 stonk_cli = "pkg:run_cli"

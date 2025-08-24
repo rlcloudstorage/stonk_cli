@@ -1,6 +1,6 @@
 """src/pkg/data_srv/utils.py\n
 create_sqlite_ohlc_database(ctx: dict) -> None\n
-create_sqlite_stonk_database(ctx: dict) -> None\n
+create_sqlite_signal_database(ctx: dict) -> None\n
 write_data_line_to_stonk_table(ctx: dict, data_tuple: tuple) -> None"""
 
 import logging
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 def create_sqlite_ohlc_database(ctx: dict) -> None:
-    """Create sqlite3 database. Table for each ticker symbol, column for ohlc."""
+    """Create sqlite3 database. Table for each ticker symbol, column for OHLC, volume."""
     if DEBUG:
         logger.debug(f"create_sqlite_ohlc_database(ctx={ctx})")
 
@@ -35,11 +35,11 @@ def create_sqlite_ohlc_database(ctx: dict) -> None:
                     f"""
                     CREATE TABLE {table} (
                         date      INTEGER    NOT NULL,
-                        Open      INTEGER,
-                        High      INTEGER,
-                        Low       INTEGER,
-                        Close     INTEGER,
-                        Volume    INTEGER,
+                        open      INTEGER,
+                        high      INTEGER,
+                        low       INTEGER,
+                        close     INTEGER,
+                        volume    INTEGER,
                         PRIMARY KEY (date)
                     )"""
                 )
@@ -50,10 +50,10 @@ def create_sqlite_ohlc_database(ctx: dict) -> None:
         print(f"\n Created db: '{con.db_path}'")
 
 
-def create_sqlite_stonk_database(ctx: dict) -> None:
+def create_sqlite_signal_database(ctx: dict) -> None:
     """Create sqlite3 database. Table for each ticker symbol, column for each data line."""
     if DEBUG:
-        logger.debug(f"create_sqlite_indicator_database(ctx={type(ctx)})")
+        logger.debug(f"create_sqlite_signal_database(ctx={type(ctx)})")
 
     # create data folder in users work_dir
     Path(f"{ctx['default']['work_dir']}{ctx['interface']['command']}").mkdir(parents=True, exist_ok=True)
@@ -75,7 +75,7 @@ def create_sqlite_stonk_database(ctx: dict) -> None:
                 """
                 )
                 # add column for each indicator (data_line)
-                for col in ctx["interface"]["data_line"]:
+                for col in ctx["interface"]["signal_line"]:
                     con.cursor.execute(
                         f"""
                         ALTER TABLE {table} ADD COLUMN {col.lower()} INTEGER
@@ -88,23 +88,45 @@ def create_sqlite_stonk_database(ctx: dict) -> None:
         print(f"\n Created db: '{con.db_path}'")
 
 
-def write_data_line_to_stonk_table(ctx: dict, data_tuple: tuple) -> None:
+def write_price_volume_data_to_ohlc_table(ctx: dict, data_tuple: tuple) -> None:
+    """"""
+    if DEBUG:
+        logger.debug(
+            f"write_price_volume_data_to_ohlc_table(ctx={ctx}, data_tuple[0]: {data_tuple[0]}, data_tuple[1]:\n{data_tuple[1]})"
+        )
+    ohlc_table = data_tuple[0]
+    data_list = list(data_tuple[1].itertuples(index=True, name=None))
+
+    if not DEBUG:
+        print(f"writing {ohlc_table} to db...")
+
+    try:
+        with SqliteConnectManager(ctx=ctx, mode="rw") as con:
+            if DEBUG:
+                logger.debug(f"ohlc_table: {ohlc_table}, data_list: {data_list}, {type(data_list)}")
+            con.cursor.executemany(f"INSERT INTO {ohlc_table} VALUES (?,?,?,?,?,?)", data_list)
+    except con.sqlite3.Error as e:
+        logger.debug(f"*** Error *** {e}")
+
+
+def write_data_line_to_signal_table(ctx: dict, data_tuple: tuple) -> None:
     """"""
     if DEBUG:
         logger.debug(
             f"write_data_line_to_stonk_table(ctx={ctx}, data_tuple[0]: {data_tuple[0]}, data_tuple[1]:\n{data_tuple[1]})"
         )
-    if not DEBUG:
-        print(f"writing to db\t")
-
-    stonk_table = data_tuple[0]
+    signal_table = data_tuple[0]
     data_list = list(data_tuple[1].itertuples(index=True, name=None))
+
+    if not DEBUG:
+        print(f"writing {signal_table} to db...")
+
     try:
         with SqliteConnectManager(ctx=ctx, mode="rw") as con:
             if DEBUG:
-                logger.debug(f"stonk_table: {stonk_table}, data_list: {data_list}, {type(data_list)}")
-            con.cursor.executemany(f"INSERT INTO {stonk_table} VALUES (?,?,?)", data_list)
-            # con.cursor.executemany(f"INSERT INTO {stonk_table} VALUES (?,?,?,?,?,?,?,?,?)", data_list)
+                logger.debug(f"signal_table: {signal_table}, data_list: {data_list}, {type(data_list)}")
+            con.cursor.executemany(f"INSERT INTO {signal_table} VALUES (?,?,?)", data_list)
+            # con.cursor.executemany(f"INSERT INTO {signal_table} VALUES (?,?,?,?,?,?,?,?,?)", data_list)
     except con.sqlite3.Error as e:
         logger.debug(f"*** Error *** {e}")
 

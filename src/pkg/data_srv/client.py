@@ -1,5 +1,5 @@
 """src/pkg/data_srv/client.py\n
-fetch_stonk_data(ctx: dict) -> None
+fetch_signal_data(ctx: dict) -> None
 """
 
 import logging
@@ -11,27 +11,51 @@ from pkg.data_srv import utils
 logger = logging.getLogger(__name__)
 
 
-def fetch_stonk_data(ctx: dict) -> None:
-    """Data for calculating indicators i.e. clv, price, volume etc."""
+def fetch_ohlc_data(ctx: dict) -> None:
+    """Data for OHLC price and volume."""
     if DEBUG:
-        logger.debug(f"fetch_stonk_data(ctx={ctx}")
+        logger.debug(f"fetch_ohlc_data(ctx={ctx}")
     if not DEBUG:
         print(" Begin download process:")
 
     # create database
-    utils.create_sqlite_stonk_database(ctx=ctx)
+    utils.create_sqlite_ohlc_database(ctx=ctx)
+
+    # select data provider
+    processor = _select_data_provider(ctx=ctx)
+
+    # get and save data for each signal line
+    for ticker in ctx["interface"]["ticker"]:
+        if not DEBUG:
+            print(f"  - fetching {ticker}\t", end="")
+
+        data_tuple = processor.download_and_parse_price_data(ticker=ticker)
+        # utils.write_price_volume_data_to_ohlc_table(ctx=ctx, data_tuple=data_tuple)
+
+    if not DEBUG:
+        print(" finished.")
+
+
+def fetch_signal_data(ctx: dict) -> None:
+    """Data for calculating indicators i.e. clv, price, volume etc."""
+    if DEBUG:
+        logger.debug(f"fetch_signal_data(ctx={ctx}")
+    if not DEBUG:
+        print(" Begin download process:")
+
+    # create database
+    utils.create_sqlite_signal_database(ctx=ctx)
 
     # select data provider
     processor = _select_data_provider(ctx=ctx)
 
     # get and save data for each ticker
-    for index, ticker in enumerate(ctx["interface"]["ticker"]):
+    for ticker in ctx["interface"]["ticker"]:
         if not DEBUG:
             print(f"  - fetching {ticker}\t", end="")
 
-        ctx["interface"]["index"] = index  # alphavantage may throttle at five downloads
         data_tuple = processor.download_and_parse_price_data(ticker=ticker)
-        utils.write_data_line_to_stonk_table(ctx=ctx, data_tuple=data_tuple)
+        # utils.write_data_line_to_signal_table(ctx=ctx, data_tuple=data_tuple)
 
     if not DEBUG:
         print(" finished.")
