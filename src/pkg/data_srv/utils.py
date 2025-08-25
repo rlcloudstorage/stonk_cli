@@ -34,13 +34,13 @@ def create_sqlite_ohlc_database(ctx: dict) -> None:
                 con.cursor.execute(
                     f"""
                     CREATE TABLE {table} (
-                        date      INTEGER    NOT NULL,
-                        open      INTEGER,
-                        high      INTEGER,
-                        low       INTEGER,
-                        close     INTEGER,
-                        volume    INTEGER,
-                        PRIMARY KEY (date)
+                        datetime      INTEGER    NOT NULL,
+                        Open          INTEGER,
+                        High         INTEGER,
+                        Low          INTEGER,
+                        Close         INTEGER,
+                        Volume       INTEGER,
+                        PRIMARY KEY (datetime)
                     )"""
                 )
     except con.sqlite3.Error as e:
@@ -69,8 +69,8 @@ def create_sqlite_signal_database(ctx: dict) -> None:
                 con.cursor.execute(
                     f"""
                     CREATE TABLE {table.upper()} (
-                        date    INTEGER    NOT NULL,
-                        PRIMARY KEY (date)
+                        datetime    INTEGER    NOT NULL,
+                        PRIMARY KEY (datetime)
                     )
                 """
                 )

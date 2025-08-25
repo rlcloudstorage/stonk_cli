@@ -30,7 +30,7 @@ def fetch_ohlc_data(ctx: dict) -> None:
             print(f"  - fetching {ticker}\t", end="")
 
         data_tuple = processor.download_and_parse_price_data(ticker=ticker)
-        # utils.write_price_volume_data_to_ohlc_table(ctx=ctx, data_tuple=data_tuple)
+        utils.write_price_volume_data_to_ohlc_table(ctx=ctx, data_tuple=data_tuple)
 
     if not DEBUG:
         print(" finished.")
@@ -55,7 +55,7 @@ def fetch_signal_data(ctx: dict) -> None:
             print(f"  - fetching {ticker}\t", end="")
 
         data_tuple = processor.download_and_parse_price_data(ticker=ticker)
-        # utils.write_data_line_to_signal_table(ctx=ctx, data_tuple=data_tuple)
+        utils.write_data_line_to_signal_table(ctx=ctx, data_tuple=data_tuple)
 
     if not DEBUG:
         print(" finished.")
