@@ -35,11 +35,11 @@ def create_sqlite_ohlc_database(ctx: dict) -> None:
                     f"""
                     CREATE TABLE {table} (
                         datetime      INTEGER    NOT NULL,
-                        Open          INTEGER,
-                        High         INTEGER,
-                        Low          INTEGER,
-                        Close         INTEGER,
-                        Volume       INTEGER,
+                        open          INTEGER,
+                        high          INTEGER,
+                        low           INTEGER,
+                        close         INTEGER,
+                        volume        INTEGER,
                         PRIMARY KEY (datetime)
                     )"""
                 )

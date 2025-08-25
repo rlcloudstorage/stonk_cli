@@ -170,7 +170,7 @@ class TiingoDataProcessor(BaseProcessor):
 
             for i, column in enumerate(['adjOpen', 'adjHigh', 'adjLow', 'adjClose', 'adjVolume']):
                 value = [round(d[column], 2) for d in dict_list]
-                df.insert(loc=i, column=column.strip("adj"), value=value, allow_duplicates=True)
+                df.insert(loc=i, column=column.strip("adj").lower(), value=value, allow_duplicates=True)
 
             return ticker, df
 
@@ -298,7 +298,7 @@ class YahooFinanceDataProcessor(BaseProcessor):
 
             # insert values for each data line into df
             for i, item in enumerate(yf_df.columns):
-                df.insert(loc=i, column=f"{item}", value=list(round(yf_df[item], 2)), allow_duplicates=True)
+                df.insert(loc=i, column=f"{item.lower()}", value=list(round(yf_df[item], 2)), allow_duplicates=True)
 
             return ticker, df
 
