@@ -125,8 +125,8 @@ def write_data_line_to_signal_table(ctx: dict, data_tuple: tuple) -> None:
         with SqliteConnectManager(ctx=ctx, mode="rw") as con:
             if DEBUG:
                 logger.debug(f"signal_table: {signal_table}, data_list: {data_list}, {type(data_list)}")
-            con.cursor.executemany(f"INSERT INTO {signal_table} VALUES (?,?,?)", data_list)
-            # con.cursor.executemany(f"INSERT INTO {signal_table} VALUES (?,?,?,?,?,?,?,?,?)", data_list)
+            # con.cursor.executemany(f"INSERT INTO {signal_table} VALUES (?,?,?)", data_list)
+            con.cursor.executemany(f"INSERT INTO {signal_table} VALUES (?,?,?,?,?,?)", data_list)
     except con.sqlite3.Error as e:
         logger.debug(f"*** Error *** {e}")
 

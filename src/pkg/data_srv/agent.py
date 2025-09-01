@@ -175,21 +175,22 @@ class TiingoDataProcessor(BaseProcessor):
             return ticker, df
 
         # process signal data
+
         # difference between the close and open price
         clop = [round((d["adjClose"] - d["adjOpen"]) * 100) for d in dict_list]
         if DEBUG:
             logger.debug(f"clop: {clop} {type(clop)}")
 
         # close location value, relative to the high-low range
-        try:
-            clv = [
-                round(((2 * d["adjClose"] - d["adjLow"] - d["adjHigh"]) / (d["adjHigh"] - d["adjLow"])) * 100)
-                for d in dict_list
-            ]
-            if DEBUG:
-                logger.debug(f"clv: {clv} {type(clv)}")
-        except ZeroDivisionError as e:
-            logger.debug(f"*** ERROR *** {e}")
+        clv = list()
+        for d in dict_list:
+            try:
+                clv.append(
+                    round(((2 * d["adjClose"] - d["adjLow"] - d["adjHigh"]) / (d["adjHigh"] - d["adjLow"])) * 100)
+                )
+            except ZeroDivisionError as e:
+                logger.debug(f"*** ERROR *** {e}")
+                clv.append(None)
 
         # close weighted average price exclude open price
         cwap = [round(((d["adjHigh"] + d["adjLow"] + 2 * d["adjClose"]) / 4) * 100) for d in dict_list]
@@ -292,11 +293,9 @@ class YahooFinanceDataProcessor(BaseProcessor):
         df = pd.DataFrame(index=yf_df.index.values.astype(int) // 10**9)
         df.index.name = "datetime"
 
-        if self.client == "ohlc":  # process OHLC data and return tuple
-            # df = pd.DataFrame(index=yf_df.index.values.astype(int) // 10**9)
-            # df.index.name = "datetime"
+        # process OHLC data
+        if self.client == "ohlc":
 
-            # insert values for each data line into df
             for i, item in enumerate(yf_df.columns):
                 df.insert(loc=i, column=f"{item.lower()}", value=list(round(yf_df[item], 2)), allow_duplicates=True)
 
@@ -312,7 +311,7 @@ class YahooFinanceDataProcessor(BaseProcessor):
             clv = list(
                 round(
                     (2 * yf_df["Close"] - yf_df["Low"] - yf_df["High"]) / (yf_df["High"] - yf_df["Low"]) * 100
-                ).astype(int)
+                )#.astype(int)
             )
             if DEBUG:
                 logger.debug(f"clv: {clv} {type(clv)}")
