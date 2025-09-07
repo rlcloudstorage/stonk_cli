@@ -263,21 +263,21 @@ class YahooFinanceDataProcessor(BaseProcessor):
         if DEBUG:
             logger.debug(f"_yfinance_data_generator(ticker={ticker})")
 
-        try:
-            yf_data = self.yf.Ticker(ticker=ticker)
-            yf_df = yf_data.history(start=self.start_date, end=self.end_date, interval=self.interval)
-        except Exception as e:
-            logger.debug(f"*** ERROR *** {e}")
-        else:
-            # # pickle ticker, yf_df
-            # with open(f"{self.work_dir}{ticker}.yf.pkl", "wb") as pkl:
-            #     pickle.dump((ticker, yf_df), pkl)
-            yield ticker, yf_df
+        # try:  # yield data from yfinance
+        #     yf_data = self.yf.Ticker(ticker=ticker)
+        #     yf_df = yf_data.history(start=self.start_date, end=self.end_date, interval=self.interval)
+        # except Exception as e:
+        #     logger.debug(f"*** ERROR *** {e}")
+        # else:
+        #     # # save ticker, yf_df to pickle
+        #     # with open(f"{self.work_dir}{ticker}.yf.pkl", "wb") as pkl:
+        #     #     pickle.dump((ticker, yf_df), pkl)
+        #     yield ticker, yf_df
 
-        # # yield data from saved pickle file
-        # with open(f"{self.work_dir}{ticker}.yf.pkl", "rb") as pkl:
-        #     ticker, df = pickle.load((pkl))
-        # yield ticker, df
+        # yield data from saved pickle file
+        with open(f"{self.work_dir}{ticker}.yf.pkl", "rb") as pkl:
+            ticker, df = pickle.load((pkl))
+        yield ticker, df
 
     def _process_yfinance_data(self, data_gen: object) -> pd.DataFrame:
         """Returns a tuple (ticker, dataframe)"""

@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class MyMultiCommand(click.MultiCommand):
-    """Parse files that start with 'cmd_' located in this directory"""
+    """Parse python files that start with 'cmd_' from this directory"""
 
     def list_commands(self, ctx):
         cmd_list = []

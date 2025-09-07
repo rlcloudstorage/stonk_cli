@@ -44,11 +44,11 @@ def cli(ctx, arguments, opt_trans):
         case "False" | "signal":
             ctx["interface"]["client"] = "signal"
             data_list = "signal_tic_list"
-            database = "signal.db"
+            database = f"{ctx['data_service']['data_provider']}_{ctx['interface']['client']}.db"
         case "ohlc":
             ctx["interface"]["client"] = "ohlc"
             data_list = "ohlc_tic_list"
-            database = "ohlc.db"
+            database = f"{ctx['data_service']['data_provider']}_{ctx['interface']['client']}.db"
 
     # add arguments to interface ctx and set database name
     if arguments:
@@ -70,7 +70,7 @@ def cli(ctx, arguments, opt_trans):
 
         ctx["interface"]["database"] = click.prompt(
             f"* Using database 'default_{database}'. Type a new database name to change,\n  press Enter to accept",
-            default=f"default_{database}",
+            default=f"{database}",
         )
     ctx["interface"]["ticker"] = ticker_list
 
